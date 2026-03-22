@@ -1,6 +1,7 @@
 import { useEffect, useState, type SyntheticEvent } from 'react'
 import { api } from '../../../api'
 import { DEFAULT_CALL_TEMPLATE, DEFAULT_SMS_TEMPLATE } from '../../../api/types'
+import { useI18n } from '@/contexts/I18nContext'
 import type { AirplaneModeResponse, UsbModeResponse, WebhookConfig } from '../../../api/types'
 
 export interface HealthStatus {
@@ -9,6 +10,7 @@ export interface HealthStatus {
 }
 
 export default function useConfigurationPageController() {
+  const { t } = useI18n()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -130,7 +132,7 @@ export default function useConfigurationPageController() {
       const newStatus = !dataStatus
       await api.setDataStatus(newStatus)
       setDataStatus(newStatus)
-      setSuccess(`Data connection ${newStatus ? 'enabled' : 'disabled'}.`)
+      setSuccess(t('configuration.actions.dataConnectionChanged', { status: newStatus ? t('common.enabled') : t('common.disabled') }))
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     }
@@ -145,7 +147,7 @@ export default function useConfigurationPageController() {
       const response = await api.setAirplaneMode(newEnabled)
       if (response.data) {
         setAirplaneMode(response.data)
-        setSuccess(`Airplane mode ${newEnabled ? 'enabled' : 'disabled'}.`)
+        setSuccess(t('configuration.actions.airplaneModeChanged', { status: newEnabled ? t('common.enabled') : t('common.disabled') }))
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -172,8 +174,8 @@ export default function useConfigurationPageController() {
       setError(null)
       setSuccess(null)
       await api.setUsbMode(selectedUsbMode, usbModePermanent)
-      const modeType = usbModePermanent ? 'permanent' : 'temporary'
-      setSuccess(`USB mode saved as ${getModeNameByValue(selectedUsbMode)} (${modeType}). Reboot the device to apply it.`)
+      const modeType = usbModePermanent ? t('configuration.usb.permanent') : t('configuration.usb.temporary')
+      setSuccess(t('configuration.actions.usbModeSaved', { mode: getModeNameByValue(selectedUsbMode), type: modeType }))
       setTimeout(() => {
         void loadData()
       }, 1000)
@@ -188,7 +190,7 @@ export default function useConfigurationPageController() {
       setSuccess(null)
       setHotSwitching(true)
       await api.setUsbModeAdvance(selectedUsbMode)
-      setSuccess(`USB mode hot-switched to ${getModeNameByValue(selectedUsbMode)}.`)
+      setSuccess(t('configuration.actions.usbHotSwitched', { mode: getModeNameByValue(selectedUsbMode) }))
       setTimeout(() => {
         void loadData()
       }, 2000)
@@ -214,7 +216,7 @@ export default function useConfigurationPageController() {
       setSuccess(null)
       setRebooting(true)
       await api.systemReboot(3)
-      setSuccess('System will reboot in 3 seconds.')
+      setSuccess(t('configuration.actions.systemRebooting'))
     } catch (err) {
       setRebooting(false)
       setError(err instanceof Error ? err.message : String(err))
@@ -227,7 +229,7 @@ export default function useConfigurationPageController() {
     try {
       const response = await api.setWebhookConfig(webhookConfig)
       if (response.status === 'ok') {
-        setSuccess('Webhook configuration saved.')
+          setSuccess(t('configuration.actions.webhookSaved'))
       } else {
         setError(response.message)
       }

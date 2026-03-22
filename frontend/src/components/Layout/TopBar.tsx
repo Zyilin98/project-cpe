@@ -20,10 +20,12 @@ import {
   Brightness7 as LightModeIcon,
   Speed as SpeedIcon,
   Sync as SyncIcon,
+  Translate as TranslateIcon,
 } from '@mui/icons-material'
 import { useTheme as useMuiTheme, type Theme } from '@mui/material/styles'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useRefreshInterval } from '../../contexts/RefreshContext'
+import { useI18n } from '../../contexts/I18nContext'
 
 interface TopBarProps {
   drawerWidth: number
@@ -40,9 +42,11 @@ export default function TopBar({
 }: TopBarProps) {
   const muiTheme = useMuiTheme<Theme>()
   const { mode, toggleTheme } = useTheme()
+  const { locale, localeOptions, setLocale, t } = useI18n()
   const location = useLocation()
   const { triggerRefresh } = useRefreshInterval()
   const [refreshMenuAnchor, setRefreshMenuAnchor] = useState<null | HTMLElement>(null)
+  const [localeMenuAnchor, setLocaleMenuAnchor] = useState<null | HTMLElement>(null)
 
   const handleRefreshMenuOpen = (event: MouseEvent<HTMLElement>) => {
     setRefreshMenuAnchor(event.currentTarget)
@@ -50,6 +54,14 @@ export default function TopBar({
 
   const handleRefreshMenuClose = () => {
     setRefreshMenuAnchor(null)
+  }
+
+  const handleLocaleMenuOpen = (event: MouseEvent<HTMLElement>) => {
+    setLocaleMenuAnchor(event.currentTarget)
+  }
+
+  const handleLocaleMenuClose = () => {
+    setLocaleMenuAnchor(null)
   }
 
   const handleRefreshIntervalChange = (interval: number) => {
@@ -62,21 +74,21 @@ export default function TopBar({
   }
 
   const getRefreshLabel = () => {
-    if (refreshInterval === 0) return 'Manual'
-    return `${refreshInterval / 1000}s sync`
+    if (refreshInterval === 0) return t('common.manual')
+    return t('common.sync', { seconds: refreshInterval / 1000 })
   }
 
   const pageMeta = useMemo(() => {
     const routes = [
-      { path: '/', title: 'Dashboard', subtitle: 'Live radio and system telemetry' },
-      { path: '/device', title: 'Device', subtitle: 'Hardware identity and SIM profile' },
-      { path: '/network', title: 'Network', subtitle: 'Radio, carrier and APN controls' },
-      { path: '/phone', title: 'Phone', subtitle: 'Call handling and voice controls' },
-      { path: '/sms', title: 'SMS', subtitle: 'Messaging timeline and send flow' },
-      { path: '/config', title: 'Configuration', subtitle: 'System policies and interface behavior' },
-      { path: '/ota', title: 'OTA Update', subtitle: 'Firmware package lifecycle' },
-      { path: '/at-console', title: 'AT Console', subtitle: 'Direct modem command interface' },
-      { path: '/terminal', title: 'Web Terminal', subtitle: 'Remote shell and diagnostics' },
+      { path: '/', titleKey: 'layout.pages.dashboard.title', subtitleKey: 'layout.pages.dashboard.subtitle' },
+      { path: '/device', titleKey: 'layout.pages.device.title', subtitleKey: 'layout.pages.device.subtitle' },
+      { path: '/network', titleKey: 'layout.pages.network.title', subtitleKey: 'layout.pages.network.subtitle' },
+      { path: '/phone', titleKey: 'layout.pages.phone.title', subtitleKey: 'layout.pages.phone.subtitle' },
+      { path: '/sms', titleKey: 'layout.pages.sms.title', subtitleKey: 'layout.pages.sms.subtitle' },
+      { path: '/config', titleKey: 'layout.pages.configuration.title', subtitleKey: 'layout.pages.configuration.subtitle' },
+      { path: '/ota', titleKey: 'layout.pages.ota.title', subtitleKey: 'layout.pages.ota.subtitle' },
+      { path: '/at-console', titleKey: 'layout.pages.atConsole.title', subtitleKey: 'layout.pages.atConsole.subtitle' },
+      { path: '/terminal', titleKey: 'layout.pages.terminal.title', subtitleKey: 'layout.pages.terminal.subtitle' },
     ]
 
     return routes.find((route) => (
@@ -85,6 +97,8 @@ export default function TopBar({
         : location.pathname.startsWith(route.path)
     )) ?? routes[0]
   }, [location.pathname])
+
+  const localeLabelKey = locale === 'zh-CN' ? 'locale.zhCN' : 'locale.enUS'
 
   return (
     <Box
@@ -110,7 +124,7 @@ export default function TopBar({
         }}
       >
         <Toolbar sx={{ minHeight: { xs: 72, sm: 84 }, px: { xs: 1.5, sm: 2.25 } }}>
-          <Tooltip title="Toggle navigation">
+          <Tooltip title={t('topbar.toggleNavigation')}>
             <IconButton
               onClick={onMenuClick}
               sx={{
@@ -126,21 +140,21 @@ export default function TopBar({
           <Stack spacing={0.25} sx={{ minWidth: 0, flexGrow: 1 }}>
             <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
               <Typography variant="overline" color="text.secondary">
-                UDX710 Control Surface
+                {t('layout.brand')}
               </Typography>
               <Chip
                 icon={<SyncIcon sx={{ fontSize: 16 }} />}
-                label={refreshInterval === 0 ? 'Manual refresh' : 'Live sync'}
+                label={refreshInterval === 0 ? t('common.manualRefresh') : t('topbar.liveSync')}
                 size="small"
                 color={refreshInterval === 0 ? 'default' : 'primary'}
                 variant="outlined"
               />
             </Box>
             <Typography variant="h6" sx={{ lineHeight: 1.1 }}>
-              {pageMeta.title}
+              {t(pageMeta.titleKey)}
             </Typography>
             <Typography variant="body2" color="text.secondary" noWrap>
-              {pageMeta.subtitle}
+              {t(pageMeta.subtitleKey)}
             </Typography>
           </Stack>
 
@@ -152,7 +166,26 @@ export default function TopBar({
               variant="outlined"
               sx={{ display: { xs: 'none', md: 'inline-flex' } }}
             />
-            <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+            <Chip
+              icon={<TranslateIcon sx={{ fontSize: 16 }} />}
+              label={t(localeLabelKey)}
+              onClick={handleLocaleMenuOpen}
+              variant="outlined"
+              sx={{ display: { xs: 'none', lg: 'inline-flex' } }}
+            />
+            <Tooltip title={t('topbar.languageMenu')}>
+              <IconButton
+                onClick={handleLocaleMenuOpen}
+                sx={{
+                  display: { xs: 'inline-flex', lg: 'none' },
+                  backgroundColor: alpha(muiTheme.palette.secondary.main, 0.12),
+                  color: 'secondary.main',
+                }}
+              >
+                <TranslateIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={mode === 'dark' ? t('topbar.switchToLight') : t('topbar.switchToDark')}>
               <IconButton
                 onClick={toggleTheme}
                 sx={{
@@ -163,7 +196,7 @@ export default function TopBar({
                 {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
               </IconButton>
             </Tooltip>
-            <Tooltip title="Refresh now">
+            <Tooltip title={t('topbar.refreshNow')}>
               <IconButton
                 onClick={handleRefresh}
                 sx={{
@@ -196,20 +229,53 @@ export default function TopBar({
             }}
           >
             <MenuItem selected={refreshInterval === 1000} onClick={() => handleRefreshIntervalChange(1000)}>
-              1 second
+              {t('topbar.refreshOneSecond')}
             </MenuItem>
             <MenuItem selected={refreshInterval === 3000} onClick={() => handleRefreshIntervalChange(3000)}>
-              3 seconds
+              {t('topbar.refreshThreeSeconds')}
             </MenuItem>
             <MenuItem selected={refreshInterval === 5000} onClick={() => handleRefreshIntervalChange(5000)}>
-              5 seconds
+              {t('topbar.refreshFiveSeconds')}
             </MenuItem>
             <MenuItem selected={refreshInterval === 10000} onClick={() => handleRefreshIntervalChange(10000)}>
-              10 seconds
+              {t('topbar.refreshTenSeconds')}
             </MenuItem>
             <MenuItem selected={refreshInterval === 0} onClick={() => handleRefreshIntervalChange(0)}>
-              Manual refresh
+              {t('common.manualRefresh')}
             </MenuItem>
+          </Menu>
+
+          <Menu
+            anchorEl={localeMenuAnchor}
+            open={Boolean(localeMenuAnchor)}
+            onClose={handleLocaleMenuClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+            PaperProps={{
+              sx: {
+                mt: 1,
+                minWidth: 180,
+              },
+            }}
+          >
+            {localeOptions.map((option) => (
+              <MenuItem
+                key={option.value}
+                selected={locale === option.value}
+                onClick={() => {
+                  setLocale(option.value)
+                  handleLocaleMenuClose()
+                }}
+              >
+                {t(`locale.${option.labelKey}`)}
+              </MenuItem>
+            ))}
           </Menu>
         </Toolbar>
       </Paper>

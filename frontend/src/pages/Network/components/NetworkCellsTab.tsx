@@ -35,6 +35,7 @@ import {
   Refresh,
   Tune,
 } from '@mui/icons-material'
+import { useI18n } from '@/contexts/I18nContext'
 import type { CellLocationResponse, CellLockStatusResponse, CellsResponse } from '../../../api/types'
 import type { RadioMode } from '../../../api'
 
@@ -109,6 +110,7 @@ export default function NetworkCellsTab({
   formatSignalValue,
   getSignalChipColor,
 }: NetworkCellsTabProps) {
+  const { t } = useI18n()
   return (
     <>
       {cellLockStatus?.any_locked && (
@@ -124,7 +126,7 @@ export default function NetworkCellsTab({
               onClick={onUnlockAllCells}
               disabled={unlocking}
             >
-              Unlock
+              {t('network.cells.unlock')}
             </Button>
           }
         >
@@ -140,7 +142,7 @@ export default function NetworkCellsTab({
         <Box sx={{ p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
           <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
             <CellTower fontSize="small" color="primary" />
-            <Typography variant="subtitle2" fontWeight="medium">Cell list</Typography>
+            <Typography variant="subtitle2" fontWeight="medium">{t('network.cells.listTitle')}</Typography>
             {cellsInfo?.cells && <Chip label={`${cellsInfo.cells.length}`} size="small" color="primary" variant="outlined" />}
           </Box>
           <Button
@@ -152,7 +154,7 @@ export default function NetworkCellsTab({
             disabled={unlocking}
             sx={{ fontSize: '0.75rem', py: 0.5 }}
           >
-            {unlocking ? 'Unlocking...' : 'Clear locks'}
+            {unlocking ? t('network.cells.unlocking') : t('network.cells.clearLocks')}
           </Button>
         </Box>
 
@@ -169,13 +171,13 @@ export default function NetworkCellsTab({
             <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ py: 0.5, px: 1, fontSize: '0.7rem', minWidth: 55 }}>Band</TableCell>
-                  <TableCell align="right" sx={{ py: 0.5, px: 0.5, fontSize: '0.7rem', minWidth: 55 }}>ARFCN</TableCell>
-                  <TableCell align="right" sx={{ py: 0.5, px: 0.5, fontSize: '0.7rem', minWidth: 40 }}>PCI</TableCell>
-                  <TableCell align="right" sx={{ py: 0.5, px: 0.5, fontSize: '0.7rem', minWidth: 50 }}>RSRP</TableCell>
-                  <TableCell align="right" sx={{ py: 0.5, px: 0.5, fontSize: '0.7rem', minWidth: 45, display: { xs: 'none', sm: 'table-cell' } }}>RSRQ</TableCell>
-                  <TableCell align="right" sx={{ py: 0.5, px: 0.5, fontSize: '0.7rem', minWidth: 45, display: { xs: 'none', sm: 'table-cell' } }}>SINR</TableCell>
-                  <TableCell align="center" sx={{ py: 0.5, px: 0.5, fontSize: '0.7rem', minWidth: 60 }}>Lock</TableCell>
+                  <TableCell sx={{ py: 0.5, px: 1, fontSize: '0.7rem', minWidth: 55 }}>{t('dashboard.cells.band')}</TableCell>
+                  <TableCell align="right" sx={{ py: 0.5, px: 0.5, fontSize: '0.7rem', minWidth: 55 }}>{t('dashboard.cells.arfcn')}</TableCell>
+                  <TableCell align="right" sx={{ py: 0.5, px: 0.5, fontSize: '0.7rem', minWidth: 40 }}>{t('dashboard.cells.pci')}</TableCell>
+                  <TableCell align="right" sx={{ py: 0.5, px: 0.5, fontSize: '0.7rem', minWidth: 50 }}>{t('dashboard.cells.rsrp')}</TableCell>
+                  <TableCell align="right" sx={{ py: 0.5, px: 0.5, fontSize: '0.7rem', minWidth: 45, display: { xs: 'none', sm: 'table-cell' } }}>{t('dashboard.cells.rsrq')}</TableCell>
+                  <TableCell align="right" sx={{ py: 0.5, px: 0.5, fontSize: '0.7rem', minWidth: 45, display: { xs: 'none', sm: 'table-cell' } }}>{t('dashboard.cells.sinr')}</TableCell>
+                  <TableCell align="center" sx={{ py: 0.5, px: 0.5, fontSize: '0.7rem', minWidth: 60 }}>{t('network.cells.lock')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -237,7 +239,7 @@ export default function NetworkCellsTab({
                                 disabled={isLocking || !!lockingCell || unlocking}
                                 sx={{ minWidth: 40, p: 0.5, fontSize: '0.7rem' }}
                               >
-                                {isLocking ? 'Locking...' : isLocked ? 'Unlock' : 'Lock'}
+                                {isLocking ? t('network.cells.locking') : isLocked ? t('network.cells.unlock') : t('network.cells.lock')}
                               </Button>
                             )
                           })()}
@@ -248,7 +250,7 @@ export default function NetworkCellsTab({
                 ) : (
                   <TableRow>
                     <TableCell colSpan={7} align="center" sx={{ py: 2 }}>
-                      <Typography variant="caption" color="text.secondary">No cell data available.</Typography>
+                      <Typography variant="caption" color="text.secondary">{t('network.cells.noCellData')}</Typography>
                     </TableCell>
                   </TableRow>
                 )}
@@ -262,17 +264,17 @@ export default function NetworkCellsTab({
         <Box sx={{ p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box display="flex" alignItems="center" gap={1}>
             <Tune fontSize="small" color="primary" />
-            <Typography variant="subtitle2" fontWeight="medium">Band lock configuration</Typography>
+            <Typography variant="subtitle2" fontWeight="medium">{t('network.cells.bandLockTitle')}</Typography>
           </Box>
           <Button size="small" variant="text" startIcon={bandConfigRefreshing ? <CircularProgress size={14} /> : <Refresh />} onClick={onRefreshBandConfig} disabled={bandConfigRefreshing} sx={{ minWidth: 'auto', fontSize: '0.75rem' }}>
-            Refresh
+            {t('network.cells.refresh')}
           </Button>
         </Box>
         <CardContent sx={{ pt: 0, px: { xs: 1.5, sm: 2 } }}>
           <Box mb={2}>
-            <Typography variant="caption" color="text.secondary" gutterBottom display="block">Radio mode</Typography>
+            <Typography variant="caption" color="text.secondary" gutterBottom display="block">{t('network.cells.radioMode')}</Typography>
             <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-              <Chip label="Auto" size="small" color={currentRadioMode === 'auto' ? 'primary' : 'default'} onClick={() => onRadioModeChange('auto')} disabled={modeLoading} />
+              <Chip label={t('network.cells.auto')} size="small" color={currentRadioMode === 'auto' ? 'primary' : 'default'} onClick={() => onRadioModeChange('auto')} disabled={modeLoading} />
               <Chip label="LTE" size="small" color={currentRadioMode === 'lte' ? 'primary' : 'default'} onClick={() => onRadioModeChange('lte')} disabled={modeLoading} />
               <Chip label="NR" size="small" color={currentRadioMode === 'nr' ? 'primary' : 'default'} onClick={() => onRadioModeChange('nr')} disabled={modeLoading} />
               {modeLoading && <CircularProgress size={16} />}
@@ -282,10 +284,10 @@ export default function NetworkCellsTab({
           <Divider sx={{ my: 1.5 }} />
 
           <Box mb={2}>
-            <Typography variant="caption" color="text.secondary" gutterBottom display="block">Lock mode</Typography>
+            <Typography variant="caption" color="text.secondary" gutterBottom display="block">{t('network.cells.lockMode')}</Typography>
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-              <Chip label="Unlocked (all supported bands)" size="small" color={lockMode === 'unlocked' ? 'success' : 'default'} onClick={() => onLockModeChange('unlocked')} disabled={bandLoading} icon={lockMode === 'unlocked' ? <LockOpen /> : undefined} />
-              <Chip label="Custom allow list" size="small" color={lockMode === 'custom' ? 'warning' : 'default'} onClick={() => onLockModeChange('custom')} disabled={bandLoading} icon={lockMode === 'custom' ? <Lock /> : undefined} />
+              <Chip label={t('network.cells.unlockedAll')} size="small" color={lockMode === 'unlocked' ? 'success' : 'default'} onClick={() => onLockModeChange('unlocked')} disabled={bandLoading} icon={lockMode === 'unlocked' ? <LockOpen /> : undefined} />
+              <Chip label={t('network.cells.customAllowList')} size="small" color={lockMode === 'custom' ? 'warning' : 'default'} onClick={() => onLockModeChange('custom')} disabled={bandLoading} icon={lockMode === 'custom' ? <Lock /> : undefined} />
             </Stack>
           </Box>
 
@@ -328,12 +330,12 @@ export default function NetworkCellsTab({
             </Grid>
           )}
 
-          {lockMode === 'unlocked' && <Alert severity="success" sx={{ mb: 2 }}>The modem can use all supported bands: B1, B3, B5, B8, B39, B41, n1, n3, n28, n41, n77, n78, n79.</Alert>}
-          {lockMode === 'custom' && <Alert severity="info" sx={{ mt: 1.5, mb: 1.5 }}>Select the bands the modem is allowed to use. Keeping a few LTE bands enabled helps as a fallback when 5G is weak.</Alert>}
+          {lockMode === 'unlocked' && <Alert severity="success" sx={{ mb: 2 }}>{t('network.cells.unlockedHelp')}</Alert>}
+          {lockMode === 'custom' && <Alert severity="info" sx={{ mt: 1.5, mb: 1.5 }}>{t('network.cells.customHelp')}</Alert>}
 
           <Box sx={{ mt: 1.5, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            <Button variant="contained" color="primary" size="small" onClick={onApplyBandLock} disabled={bandLoading} startIcon={bandLoading ? <CircularProgress size={14} /> : <Lock />}>Apply</Button>
-            <Button variant="outlined" color="success" size="small" onClick={onUnlockAllBands} disabled={bandLoading} startIcon={<LockOpen />}>Clear restrictions</Button>
+            <Button variant="contained" color="primary" size="small" onClick={onApplyBandLock} disabled={bandLoading} startIcon={bandLoading ? <CircularProgress size={14} /> : <Lock />}>{t('network.cells.apply')}</Button>
+            <Button variant="outlined" color="success" size="small" onClick={onUnlockAllBands} disabled={bandLoading} startIcon={<LockOpen />}>{t('network.cells.clearRestrictions')}</Button>
           </Box>
         </CardContent>
       </Card>
@@ -343,13 +345,13 @@ export default function NetworkCellsTab({
           <AccordionSummary expandIcon={<ExpandMore />}>
             <Box display="flex" alignItems="center" gap={1}>
               <MyLocation color="primary" />
-              <Typography variant="subtitle1" fontWeight={600}>Cell location payload</Typography>
+              <Typography variant="subtitle1" fontWeight={600}>{t('network.cells.cellLocationPayload')}</Typography>
             </Box>
           </AccordionSummary>
           <AccordionDetails>
             {locationCells.length > 0 ? (
               <>
-                <Alert severity="info" sx={{ mb: 2 }} icon={false}>These parameters can be sent to third-party cell location services such as Amap, Baidu, or Google.</Alert>
+                <Alert severity="info" sx={{ mb: 2 }} icon={false}>{t('network.cells.locationInfo')}</Alert>
                 <TableContainer component={Paper} variant="outlined">
                   <Table size="small">
                     <TableHead>
@@ -358,7 +360,7 @@ export default function NetworkCellsTab({
                         <TableCell sx={{ py: 0.5, fontSize: '0.75rem' }}>MNC</TableCell>
                         <TableCell sx={{ py: 0.5, fontSize: '0.75rem' }}>LAC/TAC</TableCell>
                         <TableCell sx={{ py: 0.5, fontSize: '0.75rem' }}>CID</TableCell>
-                        <TableCell sx={{ py: 0.5, fontSize: '0.75rem' }}>Signal</TableCell>
+                        <TableCell sx={{ py: 0.5, fontSize: '0.75rem' }}>{t('network.cells.signal')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -374,10 +376,10 @@ export default function NetworkCellsTab({
                     </TableBody>
                   </Table>
                 </TableContainer>
-                <Button variant="outlined" size="small" startIcon={<ContentCopy />} onClick={onCopyCellLocation} sx={{ mt: 1 }}>Copy JSON</Button>
+                <Button variant="outlined" size="small" startIcon={<ContentCopy />} onClick={onCopyCellLocation} sx={{ mt: 1 }}>{t('common.copyJson')}</Button>
               </>
             ) : (
-              <Alert severity="warning" icon={false}>No cell location payload is available.</Alert>
+              <Alert severity="warning" icon={false}>{t('network.cells.noLocationPayload')}</Alert>
             )}
           </AccordionDetails>
         </Accordion>

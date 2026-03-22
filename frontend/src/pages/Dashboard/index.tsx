@@ -1,6 +1,7 @@
 import { Box, Chip, CircularProgress, Stack, Typography } from '@mui/material'
 import Grid from '@mui/material/Grid'
 import { useRefreshInterval } from '@/contexts/RefreshContext'
+import { useI18n } from '@/contexts/I18nContext'
 import ErrorSnackbar from '@/components/ErrorSnackbar'
 import { useDashboardData } from './hooks/useDashboardData'
 import {
@@ -17,6 +18,7 @@ import {
 
 export default function Dashboard() {
   const { refreshInterval, refreshKey } = useRefreshInterval()
+  const { t } = useI18n()
   const { initialLoading, error, setError, data, actions } = useDashboardData(refreshInterval, refreshKey)
 
   if (initialLoading) {
@@ -35,20 +37,20 @@ export default function Dashboard() {
         <Box display="flex" alignItems="center" justifyContent="space-between" gap={2} flexWrap="wrap">
           <Box>
             <Typography variant="overline" color="text.secondary">
-              Live overview
+              {t('dashboard.page.eyebrow')}
             </Typography>
-            <Typography variant="h4">Dashboard</Typography>
+            <Typography variant="h4">{t('dashboard.page.title')}</Typography>
           </Box>
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             <Chip
-              label={refreshInterval === 0 ? 'Manual refresh' : `Auto refresh ${refreshInterval / 1000}s`}
+              label={refreshInterval === 0 ? t('common.manualRefresh') : t('common.autoRefresh', { seconds: refreshInterval / 1000 })}
               variant="outlined"
             />
-            <Chip label={`Refresh key ${refreshKey}`} variant="outlined" />
+            <Chip label={t('common.refreshKey', { key: refreshKey })} variant="outlined" />
           </Stack>
         </Box>
         <Typography variant="body1" color="text.secondary">
-          A control-room view of carrier state, system load and live traffic for the current modem session.
+          {t('dashboard.page.description')}
         </Typography>
       </Stack>
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Box, IconButton, Tooltip, Typography } from '@mui/material'
 import { Router, Visibility, VisibilityOff } from '@mui/icons-material'
+import { useI18n } from '@/contexts/I18nContext'
 import { getSensitiveStyle } from '../utils'
 import type { DeviceInfo, SystemStatsResponse } from '@/api/types'
 import { DashboardPanel } from './DashboardPanel'
@@ -12,22 +13,23 @@ interface DeviceInfoCardProps {
 
 export function DeviceInfoCard({ deviceInfo, systemStats }: DeviceInfoCardProps) {
   const [showInfo, setShowInfo] = useState(false)
+  const { t } = useI18n()
 
   const items = [
     { label: 'IMEI', value: deviceInfo?.imei || 'N/A', sensitive: true },
-    { label: 'Manufacturer', value: deviceInfo?.manufacturer || 'N/A' },
-    { label: 'Model', value: deviceInfo?.model || 'N/A' },
-    { label: 'System', value: `${systemStats?.system_info?.sysname || '-'} / ${systemStats?.system_info?.machine || '-'}` },
-    { label: 'Kernel', value: systemStats?.system_info?.release || '-' },
+    { label: t('dashboard.device.manufacturer'), value: deviceInfo?.manufacturer || 'N/A' },
+    { label: t('dashboard.device.model'), value: deviceInfo?.model || 'N/A' },
+    { label: t('dashboard.device.system'), value: `${systemStats?.system_info?.sysname || '-'} / ${systemStats?.system_info?.machine || '-'}` },
+    { label: t('dashboard.device.kernel'), value: systemStats?.system_info?.release || '-' },
   ]
 
   return (
     <DashboardPanel
-      title="Device Identity"
-      subtitle="Hardware and operating system fingerprint"
+      title={t('dashboard.device.title')}
+      subtitle={t('dashboard.device.subtitle')}
       icon={<Router color="primary" />}
       action={(
-        <Tooltip title={showInfo ? 'Hide IMEI' : 'Show IMEI'}>
+        <Tooltip title={showInfo ? t('dashboard.device.hideImei') : t('dashboard.device.showImei')}>
           <IconButton size="small" onClick={() => setShowInfo(!showInfo)}>
             {showInfo ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
           </IconButton>

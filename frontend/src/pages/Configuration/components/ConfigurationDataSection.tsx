@@ -11,6 +11,7 @@ import {
   Typography,
 } from '@mui/material'
 import { ExpandMore, Wifi } from '@mui/icons-material'
+import { useI18n } from '@/contexts/I18nContext'
 import ConfigurationSectionHeader from './ConfigurationSectionHeader'
 
 interface ConfigurationDataSectionProps {
@@ -26,20 +27,20 @@ export default function ConfigurationDataSection({
   dataStatus,
   onToggle,
 }: ConfigurationDataSectionProps) {
+  const { t } = useI18n()
   return (
     <Accordion expanded={expanded} onChange={onChange}>
       <AccordionSummary expandIcon={<ExpandMore />}>
         <ConfigurationSectionHeader
           icon={<Wifi color="primary" />}
-          title="Data Connection"
-          statusLabel={dataStatus ? 'Enabled' : 'Disabled'}
+          title={t('configuration.data.title')}
+          statusLabel={dataStatus ? t('common.enabled') : t('common.disabled')}
           statusColor={dataStatus ? 'success' : 'default'}
         />
       </AccordionSummary>
       <AccordionDetails>
         <Typography variant="body2" color="text.secondary" paragraph>
-          Control whether the modem is allowed to establish a mobile data session.
-          Disabling this interrupts services that depend on the carrier network.
+          {t('configuration.data.description')}
         </Typography>
 
         <Divider sx={{ my: 2 }} />
@@ -49,17 +50,17 @@ export default function ConfigurationDataSection({
           label={
             <Box>
               <Typography variant="body1" fontWeight={600}>
-                {dataStatus ? 'Mobile data is enabled' : 'Mobile data is disabled'}
+                {dataStatus ? t('configuration.data.enabledTitle') : t('configuration.data.disabledTitle')}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {dataStatus ? 'Turn off the mobile data session immediately' : 'Turn on the mobile data session immediately'}
+                {dataStatus ? t('configuration.data.disableAction') : t('configuration.data.enableAction')}
               </Typography>
             </Box>
           }
         />
 
         <Alert severity="info" sx={{ mt: 2 }}>
-          Turning data off interrupts any feature that currently relies on the modem&apos;s cellular connection.
+          {t('configuration.data.warning')}
         </Alert>
       </AccordionDetails>
     </Accordion>

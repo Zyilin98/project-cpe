@@ -1,5 +1,6 @@
 import { Box, Chip, LinearProgress, Stack, Tooltip, Typography } from '@mui/material'
 import { Info, Memory, Speed, Storage, Thermostat, Usb } from '@mui/icons-material'
+import { useI18n } from '@/contexts/I18nContext'
 import { formatBytes, getCpuColor, getMemoryColor, getTempColor } from '../utils'
 import type { SystemStatsResponse } from '@/api/types'
 import { DashboardPanel } from './DashboardPanel'
@@ -9,6 +10,7 @@ interface SystemResourcesProps {
 }
 
 export function SystemResources({ systemStats }: SystemResourcesProps) {
+  const { t } = useI18n()
   const getMainTemp = () => {
     if (systemStats?.temperature && systemStats.temperature.length > 0) {
       const socSensor = systemStats.temperature.find((sensor) => sensor.type.includes('soc'))
@@ -21,8 +23,8 @@ export function SystemResources({ systemStats }: SystemResourcesProps) {
 
   return (
     <DashboardPanel
-      title="System Resources"
-      subtitle="Load, memory, storage and device runtime"
+      title={t('dashboard.resources.title')}
+      subtitle={t('dashboard.resources.subtitle')}
       icon={<Speed color="primary" />}
     >
       <Stack spacing={1.5}>
@@ -31,7 +33,7 @@ export function SystemResources({ systemStats }: SystemResourcesProps) {
             <Box display="flex" alignItems="center" gap={0.75}>
               <Speed fontSize="small" color="action" />
               <Typography variant="caption" color="text.secondary">
-                CPU ({systemStats?.cpu_load?.core_count || '-'} cores)
+                {t('dashboard.resources.cpu', { cores: systemStats?.cpu_load?.core_count || '-' })}
               </Typography>
             </Box>
             <Typography variant="body2" fontWeight={700}>
@@ -45,7 +47,11 @@ export function SystemResources({ systemStats }: SystemResourcesProps) {
             sx={{ height: 8 }}
           />
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.75 }}>
-            Load {systemStats?.cpu_load?.load_1min.toFixed(2) || '-'} / {systemStats?.cpu_load?.load_5min.toFixed(2) || '-'} / {systemStats?.cpu_load?.load_15min.toFixed(2) || '-'}
+            {t('dashboard.resources.load', {
+              one: systemStats?.cpu_load?.load_1min.toFixed(2) || '-',
+              five: systemStats?.cpu_load?.load_5min.toFixed(2) || '-',
+              fifteen: systemStats?.cpu_load?.load_15min.toFixed(2) || '-',
+            })}
           </Typography>
         </Box>
 
@@ -54,7 +60,7 @@ export function SystemResources({ systemStats }: SystemResourcesProps) {
             <Box display="flex" alignItems="center" gap={0.75}>
               <Memory fontSize="small" color="action" />
               <Typography variant="caption" color="text.secondary">
-                Memory
+                {t('dashboard.resources.memory')}
               </Typography>
             </Box>
             <Typography variant="body2" fontWeight={700}>
@@ -69,7 +75,11 @@ export function SystemResources({ systemStats }: SystemResourcesProps) {
           />
           {systemStats?.memory && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.75 }}>
-              {formatBytes(systemStats.memory.used_bytes)} used / {formatBytes(systemStats.memory.available_bytes)} available / {formatBytes(systemStats.memory.cached_bytes)} cached
+              {t('dashboard.resources.memoryUsage', {
+                used: formatBytes(systemStats.memory.used_bytes),
+                available: formatBytes(systemStats.memory.available_bytes),
+                cached: formatBytes(systemStats.memory.cached_bytes),
+              })}
             </Typography>
           )}
         </Box>
@@ -115,23 +125,23 @@ export function SystemResources({ systemStats }: SystemResourcesProps) {
         <Box display="flex" alignItems="center" justifyContent="space-between" gap={1} flexWrap="wrap">
           <Chip
             icon={<Thermostat />}
-            label={mainTemp !== null ? `${mainTemp.toFixed(0)} deg C` : 'No temp'}
+            label={mainTemp !== null ? `${mainTemp.toFixed(0)} deg C` : t('dashboard.resources.noTemp')}
             color={mainTemp !== null ? getTempColor(mainTemp) : 'default'}
           />
           <Chip
             icon={<Usb />}
-            label={systemStats?.usb_mode?.current_mode_name || 'USB N/A'}
+            label={systemStats?.usb_mode?.current_mode_name || t('dashboard.resources.usbNa')}
             variant="outlined"
           />
           {systemStats?.usb_mode?.needs_reboot && (
-            <Tooltip title="A reboot is required for the queued USB mode to apply.">
-              <Chip icon={<Info />} label="Reboot pending" color="warning" variant="outlined" />
+            <Tooltip title={t('dashboard.resources.rebootTooltip')}>
+              <Chip icon={<Info />} label={t('dashboard.resources.rebootPending')} color="warning" variant="outlined" />
             </Tooltip>
           )}
         </Box>
 
         <Typography variant="caption" color="text.secondary">
-          Uptime {systemStats?.uptime?.uptime_formatted || '-'}
+          {t('dashboard.resources.uptime', { value: systemStats?.uptime?.uptime_formatted || '-' })}
         </Typography>
       </Stack>
     </DashboardPanel>

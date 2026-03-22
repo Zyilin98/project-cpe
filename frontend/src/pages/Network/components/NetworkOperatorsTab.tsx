@@ -16,6 +16,7 @@ import {
 } from '@mui/material'
 import Grid from '@mui/material/Grid'
 import { Business, Refresh, Search } from '@mui/icons-material'
+import { useI18n } from '@/contexts/I18nContext'
 import type { OperatorListResponse } from '../../../api/types'
 
 interface NetworkOperatorsTabProps {
@@ -37,17 +38,32 @@ export default function NetworkOperatorsTab({
   onAutoRegister,
   onManualRegister,
 }: NetworkOperatorsTabProps) {
+  const { t } = useI18n()
+
+  const getOperatorStatusLabel = (status: string) => {
+    switch (status) {
+      case 'current':
+        return t('network.operators.current')
+      case 'available':
+        return t('network.operators.available')
+      case 'forbidden':
+        return t('network.operators.forbidden')
+      default:
+        return status
+    }
+  }
+
   return (
     <Grid container spacing={3}>
       <Grid size={{ xs: 12, md: 6 }}>
         <Card>
           <CardHeader
             avatar={<Business color="primary" />}
-            title="Operators"
+            title={t('network.operators.title')}
             titleTypographyProps={{ variant: 'h6' }}
             action={
               <Button variant="outlined" size="small" startIcon={<Refresh />} onClick={onRefresh}>
-                Refresh
+                {t('network.operators.refresh')}
               </Button>
             }
           />
@@ -61,7 +77,7 @@ export default function NetworkOperatorsTab({
                         <Box display="flex" alignItems="center" gap={1}>
                           <Typography fontWeight={600}>{operator.name}</Typography>
                           <Chip
-                            label={operator.status}
+                            label={getOperatorStatusLabel(operator.status)}
                             size="small"
                             color={
                               operator.status === 'current'
@@ -76,10 +92,10 @@ export default function NetworkOperatorsTab({
                       secondary={
                         <>
                           <Typography variant="caption" display="block">
-                            MCC-MNC: {operator.mcc}-{operator.mnc}
+                            {t('network.operators.mccmnc')}: {operator.mcc}-{operator.mnc}
                           </Typography>
                           <Typography variant="caption" display="block">
-                            Technologies: {operator.technologies?.join(', ') || 'N/A'}
+                            {t('network.operators.technologies')}: {operator.technologies?.join(', ') || t('common.na')}
                           </Typography>
                         </>
                       }
@@ -92,7 +108,7 @@ export default function NetworkOperatorsTab({
                           onClick={() => onManualRegister(`${operator.mcc}${operator.mnc}`)}
                           disabled={registering}
                         >
-                          Register
+                          {t('network.operators.register')}
                         </Button>
                       )}
                     </ListItemSecondaryAction>
@@ -100,7 +116,7 @@ export default function NetworkOperatorsTab({
                 ))}
               </List>
             ) : (
-              <Alert severity="info">No operator data is available yet.</Alert>
+              <Alert severity="info">{t('network.operators.noData')}</Alert>
             )}
           </CardContent>
         </Card>
@@ -110,12 +126,12 @@ export default function NetworkOperatorsTab({
         <Card>
           <CardHeader
             avatar={<Search color="primary" />}
-            title="Discovery"
+            title={t('network.operators.discovery')}
             titleTypographyProps={{ variant: 'h6' }}
           />
           <CardContent>
             <Alert severity="warning" sx={{ mb: 2 }}>
-              Scanning for operators can take around 2 minutes and may interrupt connectivity while the modem searches.
+              {t('network.operators.scanWarning')}
             </Alert>
             <Button
               variant="contained"
@@ -125,7 +141,7 @@ export default function NetworkOperatorsTab({
               disabled={scanning}
               sx={{ mb: 2 }}
             >
-              {scanning ? 'Scanning...' : 'Scan available operators'}
+              {scanning ? t('network.operators.scanning') : t('network.operators.scan')}
             </Button>
             <Divider sx={{ my: 2 }} />
             <Button
@@ -135,7 +151,7 @@ export default function NetworkOperatorsTab({
               onClick={onAutoRegister}
               disabled={registering}
             >
-              {registering ? 'Registering...' : 'Auto register operator'}
+              {registering ? t('network.operators.registering') : t('network.operators.autoRegister')}
             </Button>
           </CardContent>
         </Card>

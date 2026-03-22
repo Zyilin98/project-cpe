@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Box, Chip, IconButton, Stack, Tooltip, Typography } from '@mui/material'
 import { Language, Phone, SimCard, Sms, Visibility, VisibilityOff } from '@mui/icons-material'
+import { useI18n } from '@/contexts/I18nContext'
 import { getSensitiveStyle } from '../utils'
 import type { SimInfo } from '@/api/types'
 import { DashboardPanel } from './DashboardPanel'
@@ -11,29 +12,30 @@ interface SimCardInfoProps {
 
 export function SimCardInfo({ simInfo }: SimCardInfoProps) {
   const [showInfo, setShowInfo] = useState(false)
+  const { t } = useI18n()
 
   const rows = [
-    { label: 'ICCID', value: simInfo?.iccid || 'N/A', sensitive: true },
-    { label: 'IMSI', value: simInfo?.imsi || 'N/A', sensitive: true },
-    { label: 'MCC/MNC', value: `${simInfo?.mcc || '?'}/${simInfo?.mnc || '?'}` },
-    { label: 'Phone', value: simInfo?.phone_numbers?.[0] || 'N/A', sensitive: true, icon: <Phone fontSize="small" color="action" /> },
-    { label: 'SMSC', value: simInfo?.sms_center || 'N/A', sensitive: true, icon: <Sms fontSize="small" color="action" /> },
+    { label: t('dashboard.sim.iccid'), value: simInfo?.iccid || 'N/A', sensitive: true },
+    { label: t('dashboard.sim.imsi'), value: simInfo?.imsi || 'N/A', sensitive: true },
+    { label: t('dashboard.sim.mccmnc'), value: `${simInfo?.mcc || '?'}/${simInfo?.mnc || '?'}` },
+    { label: t('dashboard.sim.phone'), value: simInfo?.phone_numbers?.[0] || 'N/A', sensitive: true, icon: <Phone fontSize="small" color="action" /> },
+    { label: t('dashboard.sim.smsc'), value: simInfo?.sms_center || 'N/A', sensitive: true, icon: <Sms fontSize="small" color="action" /> },
   ]
 
   return (
     <DashboardPanel
-      title="SIM Profile"
-      subtitle="Identity, language and line metadata"
+      title={t('dashboard.sim.title')}
+      subtitle={t('dashboard.sim.subtitle')}
       icon={<SimCard color="primary" />}
       action={(
         <Box display="flex" alignItems="center" gap={0.75}>
           <Chip
-            label={simInfo?.present ? 'Ready' : 'Missing'}
+            label={simInfo?.present ? t('dashboard.sim.ready') : t('dashboard.sim.missing')}
             color={simInfo?.present ? 'success' : 'error'}
             variant="outlined"
             size="small"
           />
-          <Tooltip title={showInfo ? 'Hide details' : 'Show details'}>
+          <Tooltip title={showInfo ? t('common.hideDetails') : t('common.showDetails')}>
             <IconButton size="small" onClick={() => setShowInfo(!showInfo)}>
               {showInfo ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
             </IconButton>
@@ -87,7 +89,7 @@ export function SimCardInfo({ simInfo }: SimCardInfoProps) {
             <Box display="flex" alignItems="center" gap={0.75} mb={1}>
               <Language fontSize="small" color="action" />
               <Typography variant="caption" color="text.secondary">
-                Languages
+                {t('dashboard.sim.languages')}
               </Typography>
             </Box>
             <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">

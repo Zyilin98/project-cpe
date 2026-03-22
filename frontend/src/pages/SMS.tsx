@@ -36,6 +36,7 @@ import {
 import { api, type SmsMessage, type SmsStats } from '../api'
 import ErrorSnackbar from '../components/ErrorSnackbar'
 import PageHero from '../components/PageHero'
+import { useI18n } from '../contexts/I18nContext'
 import { alpha } from '../utils/theme'
 
 interface ConversationGroup {
@@ -46,6 +47,7 @@ interface ConversationGroup {
 }
 
 export default function SMSPage() {
+  const { t, formatDate, formatTime: formatLocaleTime } = useI18n()
   const isMobile = useMediaQuery<Theme>((theme: Theme) => theme.breakpoints.down('md'))
 
   const [messages, setMessages] = useState<SmsMessage[]>([])
@@ -184,7 +186,7 @@ export default function SMSPage() {
 
   const handleStartNewChat = () => {
     if (!newChatNumber.trim()) {
-      setError('Please enter a phone number.')
+      setError(t('sms.actions.enterPhoneNumber'))
       return
     }
 
@@ -197,11 +199,11 @@ export default function SMSPage() {
 
   const handleSend = async () => {
     if (!phoneNumber.trim()) {
-      setError('Please enter a phone number.')
+      setError(t('sms.actions.enterPhoneNumber'))
       return
     }
     if (!content.trim()) {
-      setError('Please enter a message.')
+      setError(t('sms.actions.enterMessage'))
       return
     }
 
@@ -212,7 +214,7 @@ export default function SMSPage() {
     try {
       const response = await api.sendSms(phoneNumber, content)
       if (response.status === 'ok') {
-        setSuccess(`Message sent to ${phoneNumber}.`)
+        setSuccess(t('sms.actions.messageSent', { number: phoneNumber }))
         setContent('')
         setTimeout(() => {
           void fetchMessages()
@@ -239,7 +241,7 @@ export default function SMSPage() {
     try {
       const response = await api.clearAllSms()
       if (response.status === 'ok') {
-        setSuccess('All SMS messages were cleared.')
+        setSuccess(t('sms.actions.clearedAll'))
         setMessages([])
         setConversations([])
         setSelectedConversation(null)
@@ -252,15 +254,15 @@ export default function SMSPage() {
     }
   }
 
-  const formatTime = (timestamp: string) => {
+  const formatMessageTime = (timestamp: string) => {
     try {
       const date = new Date(timestamp)
       const now = new Date()
       const isToday = date.toDateString() === now.toDateString()
       if (isToday) {
-        return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+        return formatLocaleTime(date)
       }
-      return date.toLocaleDateString('zh-CN', {
+      return formatDate(date, {
         month: '2-digit',
         day: '2-digit',
         hour: '2-digit',
@@ -277,9 +279,9 @@ export default function SMSPage() {
       const now = new Date()
       const isToday = date.toDateString() === now.toDateString()
       if (isToday) {
-        return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+        return formatLocaleTime(date)
       }
-      return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+      return formatDate(date, { month: '2-digit', day: '2-digit' })
     } catch {
       return timestamp
     }
@@ -296,7 +298,7 @@ export default function SMSPage() {
               {stats.total}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Total
+              {t('sms.list.total')}
             </Typography>
           </Paper>
           <Paper sx={{ p: 1.25, textAlign: 'center', borderRadius: 3, bgcolor: 'surfaceContainer.main' }}>
@@ -304,7 +306,7 @@ export default function SMSPage() {
               {stats.incoming}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Incoming
+              {t('sms.list.incoming')}
             </Typography>
           </Paper>
           <Paper sx={{ p: 1.25, textAlign: 'center', borderRadius: 3, bgcolor: 'surfaceContainer.main' }}>
@@ -312,7 +314,7 @@ export default function SMSPage() {
               {stats.outgoing}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Outgoing
+              {t('sms.list.outgoing')}
             </Typography>
           </Paper>
         </Box>
@@ -321,10 +323,10 @@ export default function SMSPage() {
       <Box display="flex" justifyContent="space-between" alignItems="center" px={2} pb={1.5}>
         <Box>
           <Typography variant="subtitle1" fontWeight={700}>
-            Conversations
+            {t('sms.list.conversations')}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {conversations.length} threads
+            {t('sms.list.threadsCount', { count: conversations.length })}
           </Typography>
         </Box>
         <Box display="flex" gap={0.5}>
@@ -350,7 +352,7 @@ export default function SMSPage() {
         </Box>
       ) : conversations.length === 0 ? (
         <Box p={2}>
-          <Alert severity="info">No conversations yet. Start a new thread from the add button.</Alert>
+          <Alert severity="info">{t('sms.list.noConversations')}</Alert>
         </Box>
       ) : (
         <List sx={{ flex: 1, overflow: 'auto', py: 0.5 }}>
@@ -382,7 +384,7 @@ export default function SMSPage() {
                   }
                   secondary={
                     <Typography variant="body2" color="text.secondary" noWrap sx={{ maxWidth: 180 }}>
-                      {conversation.lastMessage.direction === 'outgoing' ? 'You: ' : ''}
+                      {conversation.lastMessage.direction === 'outgoing' ? t('sms.list.youPrefix') : ''}
                       {conversation.lastMessage.content}
                     </Typography>
                   }
@@ -425,7 +427,7 @@ export default function SMSPage() {
             {selectedConversation}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            SMS thread
+            {t('sms.chat.threadLabel')}
           </Typography>
         </Box>
       </Box>
@@ -444,7 +446,7 @@ export default function SMSPage() {
           </Box>
         ) : conversationMessages.length === 0 ? (
           <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-            <Typography color="text.secondary">Start the conversation with your first message.</Typography>
+            <Typography color="text.secondary">{t('sms.chat.empty')}</Typography>
           </Box>
         ) : (
           <>
@@ -479,13 +481,13 @@ export default function SMSPage() {
                   </Typography>
                   <Box display="flex" alignItems="center" justifyContent="flex-end" gap={0.75} mt={0.75}>
                     <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                      {formatTime(message.timestamp)}
+                      {formatMessageTime(message.timestamp)}
                     </Typography>
                     {message.direction === 'outgoing' && message.status === 'sent' && (
-                      <Chip label="Sent" size="small" sx={{ height: 18, fontSize: '0.65rem', bgcolor: 'rgba(255,255,255,0.18)', color: 'inherit' }} />
+                      <Chip label={t('sms.statuses.sent')} size="small" sx={{ height: 18, fontSize: '0.65rem', bgcolor: 'rgba(255,255,255,0.18)', color: 'inherit' }} />
                     )}
                     {message.direction === 'outgoing' && message.status === 'failed' && (
-                      <Chip label="Failed" size="small" color="error" sx={{ height: 18, fontSize: '0.65rem' }} />
+                      <Chip label={t('sms.statuses.failed')} size="small" color="error" sx={{ height: 18, fontSize: '0.65rem' }} />
                     )}
                   </Box>
                 </Paper>
@@ -510,7 +512,7 @@ export default function SMSPage() {
           maxRows={4}
           value={content}
           onChange={(event: ChangeEvent<HTMLInputElement>) => setContent(event.target.value)}
-          placeholder="Write an SMS message..."
+          placeholder={t('sms.chat.sendPlaceholder')}
           disabled={sendLoading}
           onFocus={() => {
             inputFocusedRef.current = true
@@ -537,7 +539,7 @@ export default function SMSPage() {
           }}
         />
         <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, display: 'block' }}>
-          {content.length} characters. Press `Enter` to send, `Shift+Enter` for a new line.
+          {t('sms.chat.helper', { count: content.length })}
         </Typography>
       </Box>
     </Box>
@@ -556,10 +558,10 @@ export default function SMSPage() {
     >
       <SmsIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
       <Typography variant="h6" color="text.secondary" gutterBottom>
-        Select a conversation to start messaging
+        {t('sms.emptyState.title')}
       </Typography>
       <Typography variant="body2" color="text.secondary">
-        Or create a new thread from the panel on the left.
+        {t('sms.emptyState.subtitle')}
       </Typography>
     </Box>
   )
@@ -567,13 +569,13 @@ export default function SMSPage() {
   return (
     <Box>
       <PageHero
-        eyebrow="Messaging workspace"
-        title="SMS"
-        description="Monitor inbox activity, manage conversation threads and send outbound messages from a single communications surface."
+        eyebrow={t('sms.page.eyebrow')}
+        title={t('sms.page.title')}
+        description={t('sms.page.description')}
         chips={[
-          `${conversations.length} threads`,
-          `${unreadCount} unread`,
-          selectedConversation ? `Active ${selectedConversation}` : 'No thread selected',
+          t('sms.page.threads', { count: conversations.length }),
+          t('sms.page.unread', { count: unreadCount }),
+          selectedConversation ? t('sms.page.activeThread', { phone: selectedConversation }) : t('sms.page.noThreadSelected'),
         ]}
       />
 
@@ -615,30 +617,30 @@ export default function SMSPage() {
       </Paper>
 
       <Dialog open={clearDialogOpen} onClose={() => setClearDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Clear all messages?</DialogTitle>
+        <DialogTitle>{t('sms.dialogs.clearTitle')}</DialogTitle>
         <DialogContent>
           <Typography color="text.secondary">
-            This removes every SMS record from the local message view. This action cannot be undone.
+            {t('sms.dialogs.clearBody')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setClearDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setClearDialogOpen(false)}>{t('sms.dialogs.cancel')}</Button>
           <Button onClick={() => void handleClearAll()} color="error" variant="contained">
-            Clear all
+            {t('sms.dialogs.clearAll')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={newChatDialogOpen} onClose={() => setNewChatDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Start a new conversation</DialogTitle>
+        <DialogTitle>{t('sms.dialogs.newTitle')}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             fullWidth
-            label="Phone number"
+            label={t('sms.dialogs.phoneNumber')}
             value={newChatNumber}
             onChange={(event: ChangeEvent<HTMLInputElement>) => setNewChatNumber(event.target.value)}
-            placeholder="Enter the recipient number"
+            placeholder={t('sms.dialogs.recipientPlaceholder')}
             sx={{ mt: 1 }}
             onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
               if (event.key === 'Enter') {
@@ -648,9 +650,9 @@ export default function SMSPage() {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setNewChatDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setNewChatDialogOpen(false)}>{t('sms.dialogs.cancel')}</Button>
           <Button onClick={handleStartNewChat} variant="contained">
-            Open thread
+            {t('sms.dialogs.openThread')}
           </Button>
         </DialogActions>
       </Dialog>

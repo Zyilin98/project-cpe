@@ -4,6 +4,7 @@ import { Business, CellTower, Router, SimCard } from '@mui/icons-material'
 import ErrorSnackbar from '../components/ErrorSnackbar'
 import PageHero from '../components/PageHero'
 import { useRefreshInterval } from '../contexts/RefreshContext'
+import { useI18n } from '../contexts/I18nContext'
 import { alpha } from '../utils/theme'
 import NetworkApnTab from './Network/components/NetworkApnTab'
 import NetworkCellsTab from './Network/components/NetworkCellsTab'
@@ -14,6 +15,7 @@ import useNetworkPageController from './Network/hooks/useNetworkPageController'
 
 export default function NetworkPage() {
   const { refreshInterval, refreshKey } = useRefreshInterval()
+  const { t } = useI18n()
   const [tabValue, setTabValue] = useState(0)
   const {
     initialLoading,
@@ -115,13 +117,13 @@ export default function NetworkPage() {
       </Snackbar>
 
       <PageHero
-        eyebrow="Radio workspace"
-        title="Network"
-        description="Inspect cell state, operator registration, APN context and interface health from a unified control surface."
+        eyebrow={t('network.page.eyebrow')}
+        title={t('network.page.title')}
+        description={t('network.page.description')}
         chips={[
-          refreshInterval === 0 ? 'Manual refresh' : `Auto refresh ${refreshInterval / 1000}s`,
-          `${interfaces.length} interfaces`,
-          `${operators?.operators?.length || 0} operators`,
+          refreshInterval === 0 ? t('common.manualRefresh') : t('common.autoRefresh', { seconds: refreshInterval / 1000 }),
+          t('network.page.interfaces', { count: interfaces.length }),
+          t('network.page.operators', { count: operators?.operators?.length || 0 }),
         ]}
       />
 
@@ -149,10 +151,10 @@ export default function NetworkPage() {
         })}
       >
         <Tabs value={tabValue} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
-          <Tab label="Cells & Locks" icon={<CellTower />} iconPosition="start" />
-          <Tab label="APN" icon={<SimCard />} iconPosition="start" />
-          <Tab label="Interfaces" icon={<Router />} iconPosition="start" />
-          <Tab label="Operators" icon={<Business />} iconPosition="start" />
+          <Tab label={t('network.tabs.cells')} icon={<CellTower />} iconPosition="start" />
+          <Tab label={t('network.tabs.apn')} icon={<SimCard />} iconPosition="start" />
+          <Tab label={t('network.tabs.interfaces')} icon={<Router />} iconPosition="start" />
+          <Tab label={t('network.tabs.operators')} icon={<Business />} iconPosition="start" />
         </Tabs>
       </Paper>
 

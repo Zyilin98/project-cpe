@@ -21,6 +21,7 @@ import {
 import Grid from '@mui/material/Grid'
 import type { ChipProps } from '@mui/material/Chip'
 import { Router, NetworkCheck, SignalCellularAlt } from '@mui/icons-material'
+import { useI18n } from '@/contexts/I18nContext'
 import type { IpAddress, NetworkInterfaceInfo } from '../../../api/types'
 
 interface NetworkInterfacesTabProps {
@@ -52,6 +53,7 @@ export default function NetworkInterfacesTab({
   getIpAddressStyle,
   formatBytes,
 }: NetworkInterfacesTabProps) {
+  const { formatNumber, t } = useI18n()
   return (
     <>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap" gap={2}>
@@ -64,7 +66,7 @@ export default function NetworkInterfacesTab({
                 size="small"
               />
             }
-            label={<Typography variant="body2" color="text.secondary">Show IP addresses</Typography>}
+            label={<Typography variant="body2" color="text.secondary">{t('network.interfaces.showIpAddresses')}</Typography>}
           />
           <FormControlLabel
             control={
@@ -74,10 +76,10 @@ export default function NetworkInterfacesTab({
                 size="small"
               />
             }
-            label={<Typography variant="body2" color="text.secondary">Show down interfaces</Typography>}
+            label={<Typography variant="body2" color="text.secondary">{t('network.interfaces.showDownInterfaces')}</Typography>}
           />
         </Box>
-        <Chip icon={<Router />} label={`${filteredInterfaces.length} / ${interfaces.length}`} color="primary" />
+        <Chip icon={<Router />} label={t('network.interfaces.count', { shown: filteredInterfaces.length, total: interfaces.length })} color="primary" />
       </Box>
 
       <Grid container spacing={2}>
@@ -100,11 +102,11 @@ export default function NetworkInterfacesTab({
                   <Box display="flex" gap={2} mt={0.5} flexWrap="wrap">
                     {iface.mac_address && (
                       <Typography variant="caption" color="text.secondary">
-                        MAC: {iface.mac_address}
+                        {t('network.interfaces.mac')}: {iface.mac_address}
                       </Typography>
                     )}
                     <Typography variant="caption" color="text.secondary">
-                      MTU: {iface.mtu}
+                      {t('network.interfaces.mtu')}: {iface.mtu}
                     </Typography>
                   </Box>
                 }
@@ -114,7 +116,7 @@ export default function NetworkInterfacesTab({
                   <Grid size={{ xs: 12, md: 6 }}>
                     <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <SignalCellularAlt fontSize="small" />
-                      IP addresses
+                      {t('network.interfaces.ipAddresses')}
                     </Typography>
                     <Divider sx={{ mb: 1 }} />
                     {iface.ip_addresses.length > 0 ? (
@@ -146,7 +148,7 @@ export default function NetworkInterfacesTab({
                       </Stack>
                     ) : (
                       <Typography variant="body2" color="text.secondary">
-                        No IP addresses
+                        {t('network.interfaces.noIpAddresses')}
                       </Typography>
                     )}
                   </Grid>
@@ -154,32 +156,32 @@ export default function NetworkInterfacesTab({
                   <Grid size={{ xs: 12, md: 6 }}>
                     <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <SignalCellularAlt fontSize="small" />
-                      Traffic counters
+                      {t('network.interfaces.trafficCounters')}
                     </Typography>
                     <Divider sx={{ mb: 1 }} />
                     <TableContainer component={Paper} variant="outlined">
                       <Table size="small">
                         <TableHead>
                           <TableRow>
-                            <TableCell>Direction</TableCell>
-                            <TableCell align="right">Bytes</TableCell>
-                            <TableCell align="right">Packets</TableCell>
-                            <TableCell align="right">Errors</TableCell>
+                            <TableCell>{t('network.interfaces.direction')}</TableCell>
+                            <TableCell align="right">{t('network.interfaces.bytes')}</TableCell>
+                            <TableCell align="right">{t('network.interfaces.packets')}</TableCell>
+                            <TableCell align="right">{t('network.interfaces.errors')}</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
                           <TableRow>
-                            <TableCell><Chip label="RX" size="small" color="info" /></TableCell>
+                            <TableCell><Chip label={t('network.interfaces.rx')} size="small" color="info" /></TableCell>
                             <TableCell align="right" sx={{ fontFamily: 'monospace' }}>{formatBytes(iface.rx_bytes)}</TableCell>
-                            <TableCell align="right">{iface.rx_packets.toLocaleString()}</TableCell>
+                            <TableCell align="right">{formatNumber(iface.rx_packets)}</TableCell>
                             <TableCell align="right">
                               <Chip label={iface.rx_errors} size="small" color={iface.rx_errors > 0 ? 'error' : 'default'} />
                             </TableCell>
                           </TableRow>
                           <TableRow>
-                            <TableCell><Chip label="TX" size="small" color="warning" /></TableCell>
+                            <TableCell><Chip label={t('network.interfaces.tx')} size="small" color="warning" /></TableCell>
                             <TableCell align="right" sx={{ fontFamily: 'monospace' }}>{formatBytes(iface.tx_bytes)}</TableCell>
-                            <TableCell align="right">{iface.tx_packets.toLocaleString()}</TableCell>
+                            <TableCell align="right">{formatNumber(iface.tx_packets)}</TableCell>
                             <TableCell align="right">
                               <Chip label={iface.tx_errors} size="small" color={iface.tx_errors > 0 ? 'error' : 'default'} />
                             </TableCell>
@@ -200,7 +202,7 @@ export default function NetworkInterfacesTab({
           <CardContent>
             <Box textAlign="center" py={4}>
               <Typography variant="body1" color="text.secondary">
-                Every interface is currently down. Enable "Show down interfaces" to inspect the full list.
+                {t('network.interfaces.allDown')}
               </Typography>
             </Box>
           </CardContent>

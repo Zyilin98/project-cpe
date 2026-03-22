@@ -8,11 +8,14 @@
  * 
  * Copyright (c) 2025 by 1orz, All Rights Reserved. 
  */
-import { Box, Typography, IconButton, Tooltip } from '@mui/material'
+import { Box, IconButton, Tooltip, Typography } from '@mui/material'
 import { OpenInNew as OpenInNewIcon, Fullscreen as FullscreenIcon } from '@mui/icons-material'
-import { useState, useRef } from 'react'
+import { useRef, useState } from 'react'
+import PageHero from '../components/PageHero'
+import { useI18n } from '../contexts/I18nContext'
 
 export default function Terminal() {
+  const { t } = useI18n()
   const [isFullscreen, setIsFullscreen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -37,33 +40,27 @@ export default function Terminal() {
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 2,
-        }}
-      >
-        <Typography variant="h5" fontWeight={600}>
-          Web Terminal
-        </Typography>
-        <Box>
-          <Tooltip title="Fullscreen">
-            <IconButton onClick={handleFullscreen} size="small">
-              <FullscreenIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Open in new tab">
-            <IconButton onClick={handleOpenInNewTab} size="small">
-              <OpenInNewIcon />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      </Box>
+      <PageHero
+        eyebrow={t('terminal.page.eyebrow')}
+        title={t('terminal.page.title')}
+        description={t('terminal.page.description')}
+        chips={[t('terminal.page.port')]}
+        actions={
+          <Box>
+            <Tooltip title={t('terminal.actions.fullscreen')}>
+              <IconButton onClick={handleFullscreen} size="small">
+                <FullscreenIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={t('terminal.actions.newTab')}>
+              <IconButton onClick={handleOpenInNewTab} size="small">
+                <OpenInNewIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        }
+      />
 
-      {/* Terminal iframe container */}
       <Box
         ref={containerRef}
         sx={{
@@ -78,7 +75,7 @@ export default function Terminal() {
       >
         <iframe
           src={ttydUrl}
-          title="Web Terminal"
+          title={t('terminal.page.title')}
           style={{
             width: '100%',
             height: '100%',
@@ -89,13 +86,8 @@ export default function Terminal() {
         />
       </Box>
 
-      {/* Footer hint */}
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        sx={{ mt: 1, textAlign: 'center' }}
-      >
-        ttyd @ {ttydUrl}
+      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
+        {t('terminal.hint', { url: ttydUrl })}
       </Typography>
     </Box>
   )

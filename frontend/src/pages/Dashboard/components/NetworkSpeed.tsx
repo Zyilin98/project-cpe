@@ -2,6 +2,7 @@ import { Box, Chip, Stack, Typography, useTheme, type Theme } from '@mui/materia
 import { alpha } from '@/utils/theme'
 import { ArrowDownward, ArrowUpward, Speed } from '@mui/icons-material'
 import { SparkLineChart } from '@mui/x-charts/SparkLineChart'
+import { useI18n } from '@/contexts/I18nContext'
 import { formatBytes, formatSpeed } from '../utils'
 import { SPEED_HISTORY_MAX_POINTS, type InterfaceSpeedHistory } from '../hooks/useDashboardData'
 import type { SystemStatsResponse } from '@/api/types'
@@ -14,13 +15,14 @@ interface NetworkSpeedProps {
 
 export function NetworkSpeed({ systemStats, speedHistory }: NetworkSpeedProps) {
   const theme = useTheme<Theme>()
+  const { t } = useI18n()
 
   return (
     <DashboardPanel
-      title="Live Traffic"
-      subtitle="Per-interface throughput and rolling transfer history"
+      title={t('dashboard.traffic.title')}
+      subtitle={t('dashboard.traffic.subtitle')}
       icon={<Speed color="primary" />}
-      action={<Chip label={`${SPEED_HISTORY_MAX_POINTS}s window`} variant="outlined" size="small" />}
+      action={<Chip label={t('dashboard.traffic.window', { seconds: SPEED_HISTORY_MAX_POINTS })} variant="outlined" size="small" />}
     >
       {systemStats?.network_speed?.interfaces && systemStats.network_speed.interfaces.length > 0 ? (
         <Stack spacing={1.5}>
@@ -44,7 +46,10 @@ export function NetworkSpeed({ systemStats, speedHistory }: NetworkSpeedProps) {
                   <Box display="flex" alignItems="center" gap={1}>
                     <Chip label={iface.interface} size="small" variant="outlined" sx={{ fontFamily: 'monospace' }} />
                     <Typography variant="caption" color="text.secondary">
-                      Totals {formatBytes(iface.total_rx_bytes)} down / {formatBytes(iface.total_tx_bytes)} up
+                      {t('dashboard.traffic.totals', {
+                        down: formatBytes(iface.total_rx_bytes),
+                        up: formatBytes(iface.total_tx_bytes),
+                      })}
                     </Typography>
                   </Box>
                   <Box display="flex" alignItems="center" gap={1.25} flexWrap="wrap">
@@ -56,7 +61,7 @@ export function NetworkSpeed({ systemStats, speedHistory }: NetworkSpeedProps) {
                 <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: '1fr 1fr' }} gap={1.5}>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Download
+                      {t('dashboard.traffic.download')}
                     </Typography>
                     {rxData.length > 1 ? (
                       <Box sx={{ height: 54 }}>
@@ -72,14 +77,14 @@ export function NetworkSpeed({ systemStats, speedHistory }: NetworkSpeedProps) {
                       </Box>
                     ) : (
                       <Typography variant="body2" sx={{ mt: 1 }}>
-                        Collecting traffic samples...
+                        {t('dashboard.traffic.collecting')}
                       </Typography>
                     )}
                   </Box>
 
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Upload
+                      {t('dashboard.traffic.upload')}
                     </Typography>
                     {txData.length > 1 ? (
                       <Box sx={{ height: 54 }}>
@@ -95,7 +100,7 @@ export function NetworkSpeed({ systemStats, speedHistory }: NetworkSpeedProps) {
                       </Box>
                     ) : (
                       <Typography variant="body2" sx={{ mt: 1 }}>
-                        Collecting traffic samples...
+                        {t('dashboard.traffic.collecting')}
                       </Typography>
                     )}
                   </Box>
@@ -106,7 +111,7 @@ export function NetworkSpeed({ systemStats, speedHistory }: NetworkSpeedProps) {
         </Stack>
       ) : (
         <Typography variant="body2" color="text.secondary">
-          No traffic interfaces available right now.
+          {t('dashboard.traffic.noInterfaces')}
         </Typography>
       )}
     </DashboardPanel>

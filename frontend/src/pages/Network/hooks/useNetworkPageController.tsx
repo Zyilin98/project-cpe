@@ -1,6 +1,7 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
 import { Home, Language, Link as LinkIcon, Lock, Public } from '@mui/icons-material'
 import { api, type BandLockRequest, type BandLockStatus, type RadioMode } from '../../../api'
+import { useI18n } from '@/contexts/I18nContext'
 import type {
   ApnContext,
   CellLocationResponse,
@@ -24,6 +25,7 @@ export default function useNetworkPageController({
   refreshInterval,
   refreshKey,
 }: UseNetworkPageControllerOptions) {
+  const { t } = useI18n()
   const [initialLoading, setInitialLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -169,9 +171,9 @@ export default function useNetworkPageController({
         const response = await api.scanOperators()
         if (response.status === 'ok' && response.data) {
           setOperators(response.data)
-          setSuccess(`Scan completed. Found ${response.data.operators.length} operators.`)
+          setSuccess(t('network.actions.scanCompleted', { count: response.data.operators.length }))
         } else {
-          setError(response.message || 'Operator scan failed.')
+          setError(response.message || t('network.actions.operatorScanFailed'))
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err))
@@ -188,10 +190,10 @@ export default function useNetworkPageController({
       try {
         const response = await api.registerOperatorManual(mccmnc)
         if (response.status === 'ok') {
-          setSuccess(`Registering with operator ${mccmnc}...`)
+          setSuccess(t('network.actions.manualRegistrationStarted', { code: mccmnc }))
           setTimeout(() => void loadData(), 3000)
         } else {
-          setError(response.message || 'Manual registration failed.')
+          setError(response.message || t('network.actions.manualRegistrationFailed'))
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err))
@@ -208,10 +210,10 @@ export default function useNetworkPageController({
       try {
         const response = await api.registerOperatorAuto()
         if (response.status === 'ok') {
-          setSuccess('Started automatic operator registration.')
+          setSuccess(t('network.actions.automaticRegistrationStarted'))
           setTimeout(() => void loadData(), 3000)
         } else {
-          setError(response.message || 'Automatic registration failed.')
+          setError(response.message || t('network.actions.automaticRegistrationFailed'))
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err))
@@ -232,7 +234,7 @@ export default function useNetworkPageController({
   const handleCopyCellLocation = () => {
     if (!locationCells.length) return
     void navigator.clipboard.writeText(JSON.stringify(locationCells[0], null, 2))
-    setSuccess('Copied cell location payload to the clipboard.')
+    setSuccess(t('network.actions.copiedCellLocation'))
   }
 
   const handleLockCell = async (tech: string, arfcn: string, pci: string) => {
@@ -244,15 +246,15 @@ export default function useNetworkPageController({
       const arfcnNum = parseInt(arfcn, 10)
       const pciNum = parseInt(pci, 10)
       if (Number.isNaN(arfcnNum) || Number.isNaN(pciNum)) {
-        setError('Invalid ARFCN or PCI value.')
+        setError(t('network.actions.invalidCellLock'))
         return
       }
       const result = await api.setCellLock({ rat, enable: true, arfcn: arfcnNum, pci: pciNum })
       if (result.status === 'ok') {
-        setSuccess(`Locked ${tech.toUpperCase()} cell ARFCN=${arfcn}, PCI=${pci}.`)
+        setSuccess(t('network.actions.lockedCell', { tech: tech.toUpperCase(), arfcn, pci }))
         setTimeout(() => void loadData(), 2000)
       } else {
-        setError(result.message || 'Cell lock failed.')
+        setError(result.message || t('network.actions.cellLockFailed'))
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -267,10 +269,10 @@ export default function useNetworkPageController({
     try {
       const result = await api.unlockAllCells()
       if (result.status === 'ok') {
-        setSuccess('Removed all active cell locks.')
+        setSuccess(t('network.actions.removedCellLocks'))
         setTimeout(() => void loadData(), 2000)
       } else {
-        setError(result.message || 'Failed to unlock cells.')
+        setError(result.message || t('network.actions.unlockCellsFailed'))
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -284,7 +286,7 @@ export default function useNetworkPageController({
     setError(null)
     try {
       const response = await api.setRadioMode(mode)
-      setSuccess(response.message || 'Radio mode updated.')
+      setSuccess(response.message || t('network.actions.radioModeUpdated'))
       setCurrentRadioMode(mode)
       setTimeout(() => void loadBandLockConfig(), 3000)
     } catch (err) {
@@ -304,7 +306,7 @@ export default function useNetworkPageController({
 
     try {
       const response = await api.setBandLock(request)
-      setSuccess(response.message || 'Band lock settings applied.')
+      setSuccess(response.message || t('network.actions.bandLockApplied'))
       setTimeout(() => void loadBandLockConfig(), 1000)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -323,7 +325,7 @@ export default function useNetworkPageController({
         nr_fdd_bands: [],
         nr_tdd_bands: [],
       })
-      setSuccess(response.message || 'Band restrictions cleared.')
+      setSuccess(response.message || t('network.actions.bandRestrictionsCleared'))
       setLteFddBands([])
       setLteTddBands([])
       setNrFddBands([])
@@ -360,7 +362,7 @@ export default function useNetworkPageController({
 
   const saveApn = async () => {
     if (!selectedContext) {
-      setError('Please select an APN context first.')
+      setError(t('network.actions.selectApnContext'))
       return
     }
     try {
@@ -375,7 +377,7 @@ export default function useNetworkPageController({
         password: apnForm.password || undefined,
         auth_method: apnForm.auth_method || undefined,
       })
-      setSuccess('APN configuration saved.')
+      setSuccess(t('network.actions.apnSaved'))
       setTimeout(() => void loadData(), 1000)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -449,16 +451,16 @@ export default function useNetworkPageController({
   const getScopeLabel = (scope: string) => {
     switch (scope.toLowerCase()) {
       case 'public':
-        return 'Public'
+          return t('network.interfaces.public')
       case 'private':
-        return 'Private'
+          return t('network.interfaces.private')
       case 'loopback':
-        return 'Loopback'
+          return t('network.interfaces.loopback')
       case 'link-local':
-        return 'Link-local'
-      default:
-        return scope
-    }
+          return t('network.interfaces.linkLocal')
+        default:
+          return scope
+      }
   }
 
   const getIpAddressStyle = () =>

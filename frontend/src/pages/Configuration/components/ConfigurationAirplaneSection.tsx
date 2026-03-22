@@ -13,6 +13,7 @@ import {
   Typography,
 } from '@mui/material'
 import { ExpandMore, FlightTakeoff } from '@mui/icons-material'
+import { useI18n } from '@/contexts/I18nContext'
 import type { AirplaneModeResponse } from '../../../api/types'
 import ConfigurationSectionHeader from './ConfigurationSectionHeader'
 
@@ -31,20 +32,20 @@ export default function ConfigurationAirplaneSection({
   airplaneSwitching,
   onToggle,
 }: ConfigurationAirplaneSectionProps) {
+  const { t } = useI18n()
   return (
     <Accordion expanded={expanded} onChange={onChange}>
       <AccordionSummary expandIcon={<ExpandMore />}>
         <ConfigurationSectionHeader
           icon={<FlightTakeoff color={airplaneMode?.enabled ? 'warning' : 'primary'} />}
-          title="Airplane Mode"
-          statusLabel={airplaneMode?.enabled ? 'On' : 'Off'}
+          title={t('configuration.airplane.title')}
+          statusLabel={airplaneMode?.enabled ? t('common.on') : t('common.off')}
           statusColor={airplaneMode?.enabled ? 'warning' : 'default'}
         />
       </AccordionSummary>
       <AccordionDetails>
         <Typography variant="body2" color="text.secondary" paragraph>
-          Airplane mode powers the radio stack down and prevents the modem from attaching to the mobile network.
-          USB connectivity remains available while the radio is offline.
+          {t('configuration.airplane.description')}
         </Typography>
 
         <Divider sx={{ my: 2 }} />
@@ -63,10 +64,10 @@ export default function ConfigurationAirplaneSection({
               {airplaneSwitching && <CircularProgress size={16} />}
               <Box>
                 <Typography variant="body1" fontWeight={600}>
-                  {airplaneMode?.enabled ? 'Airplane mode is enabled' : 'Airplane mode is disabled'}
+                  {airplaneMode?.enabled ? t('configuration.airplane.enabledTitle') : t('configuration.airplane.disabledTitle')}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {airplaneMode?.enabled ? 'The modem radio is offline' : 'The modem radio is active'}
+                  {airplaneMode?.enabled ? t('configuration.airplane.radioOffline') : t('configuration.airplane.radioActive')}
                 </Typography>
               </Box>
             </Box>
@@ -75,17 +76,17 @@ export default function ConfigurationAirplaneSection({
 
         <Box mt={2} p={2} sx={{ bgcolor: 'action.hover', borderRadius: 1.5 }}>
           <Typography variant="body2" color="text.secondary" gutterBottom>
-            Current modem state
+            {t('configuration.airplane.currentState')}
           </Typography>
           <Box display="flex" gap={2} flexWrap="wrap">
             <Chip
-              label={`Power: ${airplaneMode?.powered ? 'On' : 'Off'}`}
+              label={t('configuration.airplane.power', { value: airplaneMode?.powered ? t('common.on') : t('common.off') })}
               size="small"
               color={airplaneMode?.powered ? 'success' : 'default'}
               variant="outlined"
             />
             <Chip
-              label={`Radio: ${airplaneMode?.online ? 'Online' : 'Offline'}`}
+              label={t('configuration.airplane.radio', { value: airplaneMode?.online ? t('common.online') : t('common.offline') })}
               size="small"
               color={airplaneMode?.online ? 'success' : 'error'}
               variant="outlined"
@@ -94,7 +95,7 @@ export default function ConfigurationAirplaneSection({
         </Box>
 
         <Alert severity="warning" sx={{ mt: 2 }}>
-          This control toggles the modem&apos;s online state, which is equivalent to an airplane-mode style radio shutdown.
+          {t('configuration.airplane.warning')}
         </Alert>
       </AccordionDetails>
     </Accordion>

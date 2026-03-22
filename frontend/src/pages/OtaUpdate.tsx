@@ -29,6 +29,7 @@ import {
 import { api } from '../api'
 import ErrorSnackbar from '../components/ErrorSnackbar'
 import PageHero from '../components/PageHero'
+import { useI18n } from '../contexts/I18nContext'
 import type { OtaStatusResponse, OtaUploadResponse } from '../api/types'
 import { alpha } from '../utils/theme'
 
@@ -66,6 +67,7 @@ function ValidationChip({
 }
 
 export default function OtaUpdate() {
+  const { t } = useI18n()
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [applying, setApplying] = useState(false)
@@ -101,7 +103,7 @@ export default function OtaUpdate() {
     const validExtensions = ['.tar.gz', '.tgz', '.zip']
     const isValid = validExtensions.some((extension) => file.name.endsWith(extension))
     if (!isValid) {
-      setError('Please upload an OTA archive in .tar.gz, .tgz or .zip format.')
+      setError(t('ota.upload.invalidArchive'))
       return
     }
 
@@ -115,13 +117,17 @@ export default function OtaUpdate() {
       if (response.status === 'ok' && response.data) {
         setUploadResult(response.data)
         if (response.data.validation.valid) {
-          setSuccess('OTA package uploaded and validated successfully.')
+          setSuccess(t('ota.upload.success'))
         } else {
-          setError(`OTA validation failed: ${response.data.validation.error || 'Unknown validation error.'}`)
+          setError(
+            t('ota.upload.validationFailed', {
+              error: response.data.validation.error || t('common.unknown'),
+            }),
+          )
         }
         await loadStatus()
       } else {
-        setError(response.message || 'Failed to upload the OTA package.')
+        setError(response.message || t('ota.upload.uploadFailed'))
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -144,13 +150,13 @@ export default function OtaUpdate() {
       if (response.status === 'ok') {
         setSuccess(
           restartNow
-            ? 'Update applied. The device will restart now.'
-            : 'Update applied. Restart the service or device later to fully activate it.',
+            ? t('ota.actions.applyRestartSuccess')
+            : t('ota.actions.applyLaterSuccess'),
         )
         setUploadResult(null)
         await loadStatus()
       } else {
-        setError(response.message || 'Failed to apply the update.')
+        setError(response.message || t('common.error'))
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -167,11 +173,11 @@ export default function OtaUpdate() {
     try {
       const response = await api.cancelOta()
       if (response.status === 'ok') {
-        setSuccess('Pending OTA update removed.')
+        setSuccess(t('ota.actions.cancelSuccess'))
         setUploadResult(null)
         await loadStatus()
       } else {
-        setError(response.message || 'Failed to cancel the pending update.')
+        setError(response.message || t('common.error'))
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -189,17 +195,19 @@ export default function OtaUpdate() {
   return (
     <Box>
       <PageHero
-        eyebrow="Release workspace"
-        title="OTA Update"
-        description="Upload release bundles, validate package integrity and promote a pending build to the running device when you are ready."
+        eyebrow={t('ota.page.eyebrow')}
+        title={t('ota.page.title')}
+        description={t('ota.page.description')}
         chips={[
-          status?.current_version ? `Current ${status.current_version}` : 'No current version',
-          status?.pending_update ? 'Pending update present' : 'No pending update',
-          uploadResult?.validation.valid ? 'Latest upload validated' : 'Awaiting package',
+          status?.current_version
+            ? t('ota.page.currentVersion', { version: status.current_version })
+            : t('ota.page.noCurrentVersion'),
+          status?.pending_update ? t('ota.page.pendingPresent') : t('ota.page.noPendingUpdate'),
+          uploadResult?.validation.valid ? t('ota.page.latestValidated') : t('ota.page.awaitingPackage'),
         ]}
         actions={
           <Button variant="outlined" startIcon={<Refresh />} onClick={() => void loadStatus()}>
-            Refresh status
+            {t('ota.page.refreshStatus')}
           </Button>
         }
       />
@@ -215,13 +223,13 @@ export default function OtaUpdate() {
         <Grid size={{ xs: 12, lg: 4 }}>
           <Paper sx={{ p: 3, borderRadius: 5, mb: 3 }}>
             <Typography variant="h6" fontWeight={700} gutterBottom>
-              Current release
+              {t('ota.current.title')}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              This is the build currently running on the device.
+              {t('ota.current.subtitle')}
             </Typography>
-            <MetaRow label="Version" value={status?.current_version || 'N/A'} />
-            <MetaRow label="Commit" value={status?.current_commit || 'N/A'} monospace />
+            <MetaRow label={t('ota.fields.version')} value={status?.current_version || t('common.na')} />
+            <MetaRow label={t('ota.fields.commit')} value={status?.current_commit || t('common.na')} monospace />
           </Paper>
 
           <Paper
@@ -233,14 +241,14 @@ export default function OtaUpdate() {
             })}
           >
             <Typography variant="h6" fontWeight={700} gutterBottom>
-              Upload package
+              {t('ota.upload.title')}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Accepted formats: `.tar.gz`, `.tgz`, `.zip`. The package will be validated before it can be applied.
+              {t('ota.upload.subtitle')}
             </Typography>
 
             <Alert severity="info" sx={{ mb: 2 }}>
-              Use a verified OTA bundle built for this device architecture. Invalid archives may upload successfully but still fail validation.
+              {t('ota.upload.info')}
             </Alert>
 
             <input
@@ -259,7 +267,7 @@ export default function OtaUpdate() {
               disabled={uploading}
               fullWidth
             >
-              {uploading ? 'Uploading...' : 'Choose OTA package'}
+              {uploading ? t('ota.upload.uploading') : t('ota.upload.choosePackage')}
             </Button>
 
             {uploading && <LinearProgress sx={{ mt: 2, borderRadius: 999 }} />}
@@ -280,7 +288,7 @@ export default function OtaUpdate() {
                 <Box display="flex" alignItems="center" gap={1}>
                   <Warning color="warning" />
                   <Typography variant="h6" fontWeight={700}>
-                    Pending update
+                    {t('ota.pending.title')}
                   </Typography>
                   <Chip label={status.pending_meta.version} color="warning" size="small" />
                 </Box>
@@ -292,18 +300,18 @@ export default function OtaUpdate() {
                     onClick={() => setConfirmDialog('apply')}
                     disabled={applying}
                   >
-                    Apply update
+                    {t('ota.pending.apply')}
                   </Button>
                   <Button variant="outlined" color="error" startIcon={<Cancel />} onClick={() => setConfirmDialog('cancel')}>
-                    Cancel update
+                    {t('ota.pending.cancel')}
                   </Button>
                 </Box>
               </Box>
 
-              <MetaRow label="Version" value={status.pending_meta.version} />
-              <MetaRow label="Commit" value={status.pending_meta.commit} monospace />
-              <MetaRow label="Build time" value={status.pending_meta.build_time} />
-              <MetaRow label="Architecture" value={status.pending_meta.arch} />
+              <MetaRow label={t('ota.fields.version')} value={status.pending_meta.version} />
+              <MetaRow label={t('ota.fields.commit')} value={status.pending_meta.commit} monospace />
+              <MetaRow label={t('ota.fields.buildTime')} value={status.pending_meta.build_time} />
+              <MetaRow label={t('ota.fields.architecture')} value={status.pending_meta.arch} />
             </Paper>
           )}
 
@@ -312,10 +320,10 @@ export default function OtaUpdate() {
               <Box display="flex" alignItems="center" gap={1} mb={2}>
                 {uploadResult.validation.valid ? <CheckCircle color="success" /> : <ErrorIcon color="error" />}
                 <Typography variant="h6" fontWeight={700}>
-                  Upload validation
+                  {t('ota.validation.title')}
                 </Typography>
                 <Chip
-                  label={uploadResult.validation.valid ? 'Passed' : 'Failed'}
+                  label={uploadResult.validation.valid ? t('ota.validation.passed') : t('ota.validation.failed')}
                   color={uploadResult.validation.valid ? 'success' : 'error'}
                   size="small"
                 />
@@ -324,25 +332,28 @@ export default function OtaUpdate() {
               <Grid container spacing={2} sx={{ mb: 2 }}>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Paper variant="outlined" sx={{ p: 2, borderRadius: 4 }}>
-                    <MetaRow label="Version" value={uploadResult.meta.version} />
-                    <MetaRow label="Commit" value={uploadResult.meta.commit} monospace />
-                    <MetaRow label="Build time" value={uploadResult.meta.build_time} />
-                    <MetaRow label="Architecture" value={uploadResult.meta.arch} />
+                    <MetaRow label={t('ota.fields.version')} value={uploadResult.meta.version} />
+                    <MetaRow label={t('ota.fields.commit')} value={uploadResult.meta.commit} monospace />
+                    <MetaRow label={t('ota.fields.buildTime')} value={uploadResult.meta.build_time} />
+                    <MetaRow label={t('ota.fields.architecture')} value={uploadResult.meta.arch} />
                   </Paper>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Paper variant="outlined" sx={{ p: 2, borderRadius: 4 }}>
-                    <MetaRow label="Binary MD5" value={uploadResult.meta.binary_md5} monospace />
-                    <MetaRow label="Frontend MD5" value={uploadResult.meta.frontend_md5} monospace />
+                    <MetaRow label={t('ota.fields.binaryMd5')} value={uploadResult.meta.binary_md5} monospace />
+                    <MetaRow label={t('ota.fields.frontendMd5')} value={uploadResult.meta.frontend_md5} monospace />
                   </Paper>
                 </Grid>
               </Grid>
 
               <Box display="flex" gap={1} flexWrap="wrap">
-                <ValidationChip label={uploadResult.validation.is_newer ? 'Newer build' : 'Not newer'} ok={uploadResult.validation.is_newer} />
-                <ValidationChip label="Binary hash" ok={uploadResult.validation.binary_md5_match} />
-                <ValidationChip label="Frontend hash" ok={uploadResult.validation.frontend_md5_match} />
-                <ValidationChip label="Architecture" ok={uploadResult.validation.arch_match} />
+                <ValidationChip
+                  label={uploadResult.validation.is_newer ? t('ota.validation.newerBuild') : t('ota.validation.notNewer')}
+                  ok={uploadResult.validation.is_newer}
+                />
+                <ValidationChip label={t('ota.validation.binaryHash')} ok={uploadResult.validation.binary_md5_match} />
+                <ValidationChip label={t('ota.validation.frontendHash')} ok={uploadResult.validation.frontend_md5_match} />
+                <ValidationChip label={t('ota.fields.architecture')} ok={uploadResult.validation.arch_match} />
               </Box>
 
               {uploadResult.validation.error && (
@@ -357,10 +368,10 @@ export default function OtaUpdate() {
             <Paper sx={{ p: 4, borderRadius: 5, textAlign: 'center' }}>
               <SystemUpdateAlt sx={{ fontSize: 48, color: 'text.secondary', mb: 1.5 }} />
               <Typography variant="h6" gutterBottom>
-                No pending OTA package
+                {t('ota.empty.title')}
               </Typography>
               <Typography color="text.secondary">
-                Upload a release bundle to validate it and prepare the next system update.
+                {t('ota.empty.subtitle')}
               </Typography>
             </Paper>
           )}
@@ -368,37 +379,37 @@ export default function OtaUpdate() {
       </Grid>
 
       <Dialog open={confirmDialog === 'apply'} onClose={() => setConfirmDialog(null)}>
-        <DialogTitle>Apply OTA update</DialogTitle>
+        <DialogTitle>{t('ota.dialogs.applyTitle')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Applying the pending update replaces the current backend and frontend bundle on the device.
+            {t('ota.dialogs.applyBody')}
           </DialogContentText>
           <Alert severity="warning" sx={{ mt: 2 }}>
-            Restarting immediately is recommended when you want the new release to become active right away.
+            {t('ota.dialogs.applyWarning')}
           </Alert>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmDialog(null)}>Cancel</Button>
+          <Button onClick={() => setConfirmDialog(null)}>{t('ota.dialogs.cancel')}</Button>
           <Button onClick={() => void handleApply(false)} variant="outlined">
-            Apply only
+            {t('ota.dialogs.applyOnly')}
           </Button>
           <Button onClick={() => void handleApply(true)} variant="contained" color="success" startIcon={<RestartAlt />}>
-            Apply and restart
+            {t('ota.dialogs.applyAndRestart')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={confirmDialog === 'cancel'} onClose={() => setConfirmDialog(null)}>
-        <DialogTitle>Discard pending OTA update</DialogTitle>
+        <DialogTitle>{t('ota.dialogs.discardTitle')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            This removes the uploaded package that is waiting to be installed.
+            {t('ota.dialogs.discardBody')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmDialog(null)}>Back</Button>
+          <Button onClick={() => setConfirmDialog(null)}>{t('ota.dialogs.back')}</Button>
           <Button onClick={() => void handleCancel()} variant="contained" color="error">
-            Discard update
+            {t('ota.dialogs.discardUpdate')}
           </Button>
         </DialogActions>
       </Dialog>

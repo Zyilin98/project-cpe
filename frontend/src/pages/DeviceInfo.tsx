@@ -23,6 +23,7 @@ import {
 import { api } from '../api'
 import ErrorSnackbar from '../components/ErrorSnackbar'
 import PageHero from '../components/PageHero'
+import { useI18n } from '../contexts/I18nContext'
 import type { DeviceInfo, ImeisvResponse, SimInfo, SimSlotResponse } from '../api/types'
 
 function InfoRow({
@@ -59,6 +60,7 @@ function InfoRow({
 }
 
 export default function DeviceInfoPage() {
+  const { t } = useI18n()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -101,12 +103,12 @@ export default function DeviceInfoPage() {
     try {
       const response = await api.switchSimSlot(targetSlot)
       if (response.status === 'ok') {
-        setSuccess(`Switching to SIM slot ${targetSlot}...`)
+        setSuccess(t('deviceInfoPage.actions.switchSlotSuccess', { slot: targetSlot }))
         setTimeout(() => {
           void loadData()
         }, 2000)
       } else {
-        setError(response.message || 'Failed to switch SIM slot.')
+        setError(response.message || t('deviceInfoPage.actions.switchSlotFailed'))
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -127,20 +129,25 @@ export default function DeviceInfoPage() {
     )
   }
 
+  const naLabel = t('common.na')
+  const activeSlotLabel = simSlot?.active_slot
+    ? t('deviceInfoPage.page.slot', { slot: simSlot.active_slot })
+    : t('deviceInfoPage.page.slotUnknown')
+
   return (
     <Box>
       <PageHero
-        eyebrow="Hardware workspace"
-        title="Device Info"
-        description="Review modem identity, SIM state and slot selection from a compact hardware overview surface."
+        eyebrow={t('deviceInfoPage.page.eyebrow')}
+        title={t('deviceInfoPage.page.title')}
+        description={t('deviceInfoPage.page.description')}
         chips={[
-          deviceInfo?.online ? 'Radio online' : 'Radio offline',
-          simInfo?.present ? 'SIM detected' : 'No SIM detected',
-          simSlot?.active_slot ? `Slot ${simSlot.active_slot}` : 'Slot unknown',
+          deviceInfo?.online ? t('deviceInfoPage.page.radioOnline') : t('deviceInfoPage.page.radioOffline'),
+          simInfo?.present ? t('deviceInfoPage.page.simDetected') : t('deviceInfoPage.page.noSimDetected'),
+          activeSlotLabel,
         ]}
         actions={
           <Button variant="outlined" onClick={() => void loadData()}>
-            Refresh
+            {t('deviceInfoPage.page.refresh')}
           </Button>
         }
       />
@@ -161,16 +168,22 @@ export default function DeviceInfoPage() {
               <Box display="flex" alignItems="center" gap={1}>
                 <PhoneAndroid color="primary" />
                 <Typography variant="h6" fontWeight={700}>
-                  Device status
+                  {t('deviceInfoPage.sections.status')}
                 </Typography>
               </Box>
             </Box>
 
-            <InfoRow label="Online state" value={deviceInfo?.online ? 'Online' : 'Offline'} />
-            <InfoRow label="Manufacturer" value={deviceInfo?.manufacturer || 'N/A'} />
-            <InfoRow label="Model" value={deviceInfo?.model || 'N/A'} />
-            <InfoRow label="Firmware revision" value={deviceInfo?.revision || 'N/A'} />
-            <InfoRow label="Power state" value={deviceInfo?.powered ? 'Powered on' : 'Powered off'} />
+            <InfoRow
+              label={t('deviceInfoPage.fields.onlineState')}
+              value={deviceInfo?.online ? t('deviceInfoPage.values.online') : t('deviceInfoPage.values.offline')}
+            />
+            <InfoRow label={t('deviceInfoPage.fields.manufacturer')} value={deviceInfo?.manufacturer || naLabel} />
+            <InfoRow label={t('deviceInfoPage.fields.model')} value={deviceInfo?.model || naLabel} />
+            <InfoRow label={t('deviceInfoPage.fields.firmwareRevision')} value={deviceInfo?.revision || naLabel} />
+            <InfoRow
+              label={t('deviceInfoPage.fields.powerState')}
+              value={deviceInfo?.powered ? t('deviceInfoPage.values.poweredOn') : t('deviceInfoPage.values.poweredOff')}
+            />
           </Paper>
         </Grid>
 
@@ -180,20 +193,20 @@ export default function DeviceInfoPage() {
               <Box display="flex" alignItems="center" gap={1}>
                 <Tag color="primary" />
                 <Typography variant="h6" fontWeight={700}>
-                  Device identity
+                  {t('deviceInfoPage.sections.identity')}
                 </Typography>
               </Box>
-              <Tooltip title={showDeviceId ? 'Hide sensitive identifiers' : 'Reveal sensitive identifiers'}>
+              <Tooltip title={showDeviceId ? t('deviceInfoPage.tooltips.hideIds') : t('deviceInfoPage.tooltips.showIds')}>
                 <IconButton size="small" color="primary" onClick={() => setShowDeviceId((current) => !current)}>
                   {showDeviceId ? <VisibilityOff /> : <Visibility />}
                 </IconButton>
               </Tooltip>
             </Box>
 
-            <InfoRow label="IMEI" value={deviceInfo?.imei || 'N/A'} masked={!showDeviceId} monospace />
-            <InfoRow label="IMEISV" value={imeisv?.software_version_number || 'N/A'} monospace />
-            <InfoRow label="ICCID" value={simInfo?.iccid || 'N/A'} masked={!showDeviceId} monospace />
-            <InfoRow label="IMSI" value={simInfo?.imsi || 'N/A'} masked={!showDeviceId} monospace />
+            <InfoRow label={t('deviceInfoPage.fields.imei')} value={deviceInfo?.imei || naLabel} masked={!showDeviceId} monospace />
+            <InfoRow label={t('deviceInfoPage.fields.imeisv')} value={imeisv?.software_version_number || naLabel} monospace />
+            <InfoRow label={t('deviceInfoPage.fields.iccid')} value={simInfo?.iccid || naLabel} masked={!showDeviceId} monospace />
+            <InfoRow label={t('deviceInfoPage.fields.imsi')} value={simInfo?.imsi || naLabel} masked={!showDeviceId} monospace />
           </Paper>
         </Grid>
 
@@ -203,25 +216,37 @@ export default function DeviceInfoPage() {
               <Box display="flex" alignItems="center" gap={1}>
                 <SimCard color="primary" />
                 <Typography variant="h6" fontWeight={700}>
-                  SIM profile
+                  {t('deviceInfoPage.sections.simProfile')}
                 </Typography>
               </Box>
-              <Tooltip title={showSimInfo ? 'Hide sensitive SIM data' : 'Reveal sensitive SIM data'}>
+              <Tooltip title={showSimInfo ? t('deviceInfoPage.tooltips.hideSim') : t('deviceInfoPage.tooltips.showSim')}>
                 <IconButton size="small" color="primary" onClick={() => setShowSimInfo((current) => !current)}>
                   {showSimInfo ? <VisibilityOff /> : <Visibility />}
                 </IconButton>
               </Tooltip>
             </Box>
 
-            <InfoRow label="SIM state" value={simInfo?.present ? 'Inserted' : 'Not detected'} />
-            <InfoRow label="PIN state" value={simInfo?.pin_required || 'N/A'} />
-            <InfoRow label="Phone numbers" value={simInfo?.phone_numbers?.join(', ') || 'N/A'} masked={!showSimInfo} monospace />
-            <InfoRow label="MCC / MNC" value={`${simInfo?.mcc || 'N/A'} / ${simInfo?.mnc || 'N/A'}`} monospace />
-            <InfoRow label="SMS center" value={simInfo?.sms_center || 'N/A'} masked={!showSimInfo} monospace />
+            <InfoRow
+              label={t('deviceInfoPage.fields.simState')}
+              value={simInfo?.present ? t('deviceInfoPage.values.inserted') : t('deviceInfoPage.values.notDetected')}
+            />
+            <InfoRow label={t('deviceInfoPage.fields.pinState')} value={simInfo?.pin_required || naLabel} />
+            <InfoRow
+              label={t('deviceInfoPage.fields.phoneNumbers')}
+              value={simInfo?.phone_numbers?.join(', ') || naLabel}
+              masked={!showSimInfo}
+              monospace
+            />
+            <InfoRow
+              label={t('deviceInfoPage.fields.mccmnc')}
+              value={`${simInfo?.mcc || naLabel} / ${simInfo?.mnc || naLabel}`}
+              monospace
+            />
+            <InfoRow label={t('deviceInfoPage.fields.smsCenter')} value={simInfo?.sms_center || naLabel} masked={!showSimInfo} monospace />
 
             <Box pt={1.5}>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Preferred languages
+                {t('deviceInfoPage.fields.preferredLanguages')}
               </Typography>
               <Box display="flex" gap={0.75} flexWrap="wrap">
                 {simInfo?.preferred_languages?.length ? (
@@ -229,7 +254,7 @@ export default function DeviceInfoPage() {
                     <Chip key={language} label={language.toUpperCase()} size="small" />
                   ))
                 ) : (
-                  <Chip label="N/A" size="small" variant="outlined" />
+                  <Chip label={naLabel} size="small" variant="outlined" />
                 )}
               </Box>
             </Box>
@@ -242,7 +267,7 @@ export default function DeviceInfoPage() {
               <Box display="flex" alignItems="center" gap={1}>
                 <SwapHoriz color="primary" />
                 <Typography variant="h6" fontWeight={700}>
-                  SIM slot
+                  {t('deviceInfoPage.sections.simSlot')}
                 </Typography>
               </Box>
               <Button
@@ -251,15 +276,20 @@ export default function DeviceInfoPage() {
                 onClick={() => void switchSimSlot()}
                 disabled={switchingSlot || !simSlot}
               >
-                {switchingSlot ? 'Switching...' : `Switch to slot ${simSlot?.active_slot === 1 ? 2 : 1}`}
+                {switchingSlot
+                  ? t('deviceInfoPage.actions.switching')
+                  : t('deviceInfoPage.actions.switchToSlot', { slot: simSlot?.active_slot === 1 ? 2 : 1 })}
               </Button>
             </Box>
 
-            <InfoRow label="Active slot" value={simSlot?.active_slot ? `Slot ${simSlot.active_slot}` : 'Unknown'} />
-            <InfoRow label="Raw modem value" value={simSlot?.raw_value || 'N/A'} monospace />
+            <InfoRow
+              label={t('deviceInfoPage.fields.activeSlot')}
+              value={simSlot?.active_slot ? t('deviceInfoPage.page.slot', { slot: simSlot.active_slot }) : t('deviceInfoPage.values.unknown')}
+            />
+            <InfoRow label={t('deviceInfoPage.fields.rawModemValue')} value={simSlot?.raw_value || naLabel} monospace />
 
             <Alert severity="info" sx={{ mt: 2 }}>
-              After switching the SIM slot, the modem may need a short time to re-register on the mobile network.
+              {t('deviceInfoPage.alert.slotWarning')}
             </Alert>
           </Paper>
         </Grid>

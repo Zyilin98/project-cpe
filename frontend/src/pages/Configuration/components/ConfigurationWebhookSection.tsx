@@ -16,6 +16,7 @@ import {
   Typography,
 } from '@mui/material'
 import { Add, ExpandMore, PlayArrow, Webhook } from '@mui/icons-material'
+import { useI18n } from '@/contexts/I18nContext'
 import type { WebhookConfig } from '../../../api/types'
 import ConfigurationSectionHeader from './ConfigurationSectionHeader'
 
@@ -58,19 +59,20 @@ export default function ConfigurationWebhookSection({
   defaultSmsTemplate,
   defaultCallTemplate,
 }: ConfigurationWebhookSectionProps) {
+  const { t } = useI18n()
   return (
     <Accordion expanded={expanded} onChange={onChange}>
       <AccordionSummary expandIcon={<ExpandMore />}>
         <ConfigurationSectionHeader
           icon={<Webhook color={webhookConfig.enabled ? 'success' : 'primary'} />}
-          title="Webhook Forwarding"
-          statusLabel={webhookConfig.enabled ? 'Enabled' : 'Disabled'}
+          title={t('configuration.webhook.title')}
+          statusLabel={webhookConfig.enabled ? t('common.enabled') : t('common.disabled')}
           statusColor={webhookConfig.enabled ? 'success' : 'default'}
         />
       </AccordionSummary>
       <AccordionDetails>
         <Typography variant="body2" color="text.secondary" paragraph>
-          Forward SMS and call events to an external webhook endpoint for automation workflows.
+          {t('configuration.webhook.description')}
         </Typography>
 
         <Divider sx={{ my: 2 }} />
@@ -86,10 +88,10 @@ export default function ConfigurationWebhookSection({
           label={
             <Box>
               <Typography variant="body1" fontWeight={600}>
-                {webhookConfig.enabled ? 'Forwarding is enabled' : 'Forwarding is disabled'}
+                {webhookConfig.enabled ? t('configuration.webhook.forwardingEnabled') : t('configuration.webhook.forwardingDisabled')}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Incoming SMS and call events can be pushed to your webhook target.
+                {t('configuration.webhook.forwardingHint')}
               </Typography>
             </Box>
           }
@@ -98,10 +100,10 @@ export default function ConfigurationWebhookSection({
 
         <TextField
           fullWidth
-          label="Webhook URL"
+          label={t('configuration.webhook.url')}
           value={webhookConfig.url}
           onChange={(event: ChangeEvent<HTMLInputElement>) => onWebhookConfigChange({ url: event.target.value })}
-          placeholder="https://example.com/webhook"
+          placeholder={t('configuration.webhook.urlPlaceholder')}
           sx={{ mb: 2 }}
           disabled={!webhookConfig.enabled}
         />
@@ -115,7 +117,7 @@ export default function ConfigurationWebhookSection({
                 disabled={!webhookConfig.enabled}
               />
             }
-            label="Forward SMS"
+            label={t('configuration.webhook.forwardSms')}
           />
           <FormControlLabel
             control={
@@ -125,29 +127,29 @@ export default function ConfigurationWebhookSection({
                 disabled={!webhookConfig.enabled}
               />
             }
-            label="Forward calls"
+            label={t('configuration.webhook.forwardCalls')}
           />
         </Box>
 
         <TextField
           fullWidth
-          label="Signing secret (optional)"
+          label={t('configuration.webhook.signingSecret')}
           value={webhookConfig.secret}
           onChange={(event: ChangeEvent<HTMLInputElement>) => onWebhookConfigChange({ secret: event.target.value })}
-          placeholder="Used to verify incoming webhook requests"
+          placeholder={t('configuration.webhook.signingSecretPlaceholder')}
           type="password"
           sx={{ mb: 2 }}
           disabled={!webhookConfig.enabled}
-          helperText="When set, requests include an X-Webhook-Signature header."
+          helperText={t('configuration.webhook.signingSecretHelp')}
         />
 
         <Typography variant="subtitle2" gutterBottom>
-          Custom headers
+          {t('configuration.webhook.customHeaders')}
         </Typography>
         <Box display="flex" gap={1} mb={1}>
           <TextField
             size="small"
-            label="Header key"
+            label={t('configuration.webhook.headerKey')}
             value={newHeaderKey}
             onChange={(event: ChangeEvent<HTMLInputElement>) => onNewHeaderKeyChange(event.target.value)}
             disabled={!webhookConfig.enabled}
@@ -155,7 +157,7 @@ export default function ConfigurationWebhookSection({
           />
           <TextField
             size="small"
-            label="Header value"
+            label={t('configuration.webhook.headerValue')}
             value={newHeaderValue}
             onChange={(event: ChangeEvent<HTMLInputElement>) => onNewHeaderValueChange(event.target.value)}
             disabled={!webhookConfig.enabled}
@@ -187,22 +189,22 @@ export default function ConfigurationWebhookSection({
         <Divider sx={{ my: 2 }} />
 
         <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          Payload templates
-          <Chip label="JSON" size="small" variant="outlined" />
+          {t('configuration.webhook.payloadTemplates')}
+          <Chip label={t('configuration.webhook.json')} size="small" variant="outlined" />
         </Typography>
 
         <Alert severity="info" sx={{ mb: 2 }}>
           <Typography variant="body2">
-            Supported SMS variables: <code>{'{{phone_number}}'}</code>, <code>{'{{content}}'}</code>, <code>{'{{timestamp}}'}</code>, <code>{'{{direction}}'}</code>, <code>{'{{status}}'}</code>
+            {t('configuration.webhook.supportedSms')}: <code>{'{{phone_number}}'}</code>, <code>{'{{content}}'}</code>, <code>{'{{timestamp}}'}</code>, <code>{'{{direction}}'}</code>, <code>{'{{status}}'}</code>
           </Typography>
           <Typography variant="body2" sx={{ mt: 0.5 }}>
-            Supported call variables: <code>{'{{phone_number}}'}</code>, <code>{'{{duration}}'}</code>, <code>{'{{start_time}}'}</code>, <code>{'{{end_time}}'}</code>, <code>{'{{answered}}'}</code>, <code>{'{{direction}}'}</code>
+            {t('configuration.webhook.supportedCall')}: <code>{'{{phone_number}}'}</code>, <code>{'{{duration}}'}</code>, <code>{'{{start_time}}'}</code>, <code>{'{{end_time}}'}</code>, <code>{'{{answered}}'}</code>, <code>{'{{direction}}'}</code>
           </Typography>
         </Alert>
 
         <TextField
           fullWidth
-          label="SMS payload template"
+          label={t('configuration.webhook.smsTemplate')}
           value={webhookConfig.sms_template}
           onChange={(event: ChangeEvent<HTMLInputElement>) => onWebhookConfigChange({ sms_template: event.target.value })}
           multiline
@@ -217,7 +219,7 @@ export default function ConfigurationWebhookSection({
 
         <TextField
           fullWidth
-          label="Call payload template"
+          label={t('configuration.webhook.callTemplate')}
           value={webhookConfig.call_template}
           onChange={(event: ChangeEvent<HTMLInputElement>) => onWebhookConfigChange({ call_template: event.target.value })}
           multiline
@@ -232,7 +234,7 @@ export default function ConfigurationWebhookSection({
 
         <Box display="flex" gap={1} mb={2}>
           <Button size="small" variant="outlined" onClick={onResetTemplates} disabled={!webhookConfig.enabled}>
-            Reset templates
+            {t('configuration.webhook.resetTemplates')}
           </Button>
         </Box>
 
@@ -246,7 +248,7 @@ export default function ConfigurationWebhookSection({
             disabled={webhookLoading}
             startIcon={webhookLoading ? <CircularProgress size={20} /> : undefined}
           >
-            {webhookLoading ? 'Saving...' : 'Save configuration'}
+            {webhookLoading ? t('configuration.webhook.saving') : t('configuration.webhook.saveConfig')}
           </Button>
           <Button
             variant="outlined"
@@ -254,12 +256,12 @@ export default function ConfigurationWebhookSection({
             disabled={webhookTesting || !webhookConfig.enabled || !webhookConfig.url}
             startIcon={webhookTesting ? <CircularProgress size={20} /> : <PlayArrow />}
           >
-            {webhookTesting ? 'Testing...' : 'Send test'}
+            {webhookTesting ? t('configuration.webhook.testing') : t('configuration.webhook.sendTest')}
           </Button>
         </Box>
 
         <Alert severity="success" sx={{ mt: 2 }}>
-          Pressing test sends a sample event payload to the configured webhook so you can validate headers and template output.
+          {t('configuration.webhook.successAlert')}
         </Alert>
       </AccordionDetails>
     </Accordion>

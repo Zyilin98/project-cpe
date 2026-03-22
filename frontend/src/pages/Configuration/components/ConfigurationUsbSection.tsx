@@ -17,6 +17,7 @@ import {
   Typography,
 } from '@mui/material'
 import { ExpandMore, FlashOn, Usb } from '@mui/icons-material'
+import { useI18n } from '@/contexts/I18nContext'
 import type { UsbModeResponse } from '../../../api/types'
 import ConfigurationSectionHeader from './ConfigurationSectionHeader'
 
@@ -53,25 +54,26 @@ export default function ConfigurationUsbSection({
   onReboot,
   getModeNameByValue,
 }: ConfigurationUsbSectionProps) {
+  const { t } = useI18n()
   return (
     <Accordion expanded={expanded} onChange={onChange}>
       <AccordionSummary expandIcon={<ExpandMore />}>
         <ConfigurationSectionHeader
           icon={<Usb color="primary" />}
-          title="USB Mode"
-          statusLabel={usbMode?.current_mode_name || 'N/A'}
+          title={t('configuration.usb.title')}
+          statusLabel={usbMode?.current_mode_name || t('common.na')}
           statusColor="primary"
         />
       </AccordionSummary>
       <AccordionDetails>
         <Typography variant="body2" color="text.secondary" paragraph>
-          Choose how the modem presents its USB networking interface to the host operating system.
+          {t('configuration.usb.description')}
         </Typography>
 
         <Divider sx={{ my: 2 }} />
 
         <FormControl component="fieldset" fullWidth>
-          <FormLabel component="legend">USB network mode</FormLabel>
+          <FormLabel component="legend">{t('configuration.usb.networkMode')}</FormLabel>
           <RadioGroup
             value={selectedUsbMode}
             onChange={(event) => onSelectedUsbModeChange(Number(event.target.value))}
@@ -81,9 +83,9 @@ export default function ConfigurationUsbSection({
               control={<Radio />}
               label={
                 <Box>
-                  <Typography variant="body1">CDC-NCM (Recommended)</Typography>
+                  <Typography variant="body1">{t('configuration.usb.cdcNcm')}</Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Best overall throughput, ideal for Linux and macOS hosts.
+                    {t('configuration.usb.cdcNcmDesc')}
                   </Typography>
                 </Box>
               }
@@ -93,9 +95,9 @@ export default function ConfigurationUsbSection({
               control={<Radio />}
               label={
                 <Box>
-                  <Typography variant="body1">CDC-ECM</Typography>
+                  <Typography variant="body1">{t('configuration.usb.cdcEcm')}</Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Broad compatibility for older systems with slightly lower performance.
+                    {t('configuration.usb.cdcEcmDesc')}
                   </Typography>
                 </Box>
               }
@@ -105,9 +107,9 @@ export default function ConfigurationUsbSection({
               control={<Radio />}
               label={
                 <Box>
-                  <Typography variant="body1">RNDIS</Typography>
+                  <Typography variant="body1">{t('configuration.usb.rndis')}</Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Best suited for Windows hosts that expect the RNDIS stack.
+                    {t('configuration.usb.rndisDesc')}
                   </Typography>
                 </Box>
               }
@@ -138,10 +140,10 @@ export default function ConfigurationUsbSection({
                 <FlashOn color={useHotSwitch ? 'warning' : 'disabled'} />
                 <Box>
                   <Typography variant="body1" fontWeight={600}>
-                    Hot switch mode
+                    {t('configuration.usb.hotSwitchTitle')}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Apply the USB mode immediately without waiting for a reboot. Use carefully while testing.
+                    {t('configuration.usb.hotSwitchDesc')}
                   </Typography>
                 </Box>
               </Box>
@@ -151,7 +153,7 @@ export default function ConfigurationUsbSection({
 
         {!useHotSwitch && (
           <FormControl component="fieldset" fullWidth sx={{ mb: 2 }}>
-            <FormLabel component="legend">Persistence</FormLabel>
+            <FormLabel component="legend">{t('configuration.usb.persistence')}</FormLabel>
             <RadioGroup
               value={usbModePermanent ? 'permanent' : 'temporary'}
               onChange={(event) => onUsbModePermanentChange(event.target.value === 'permanent')}
@@ -161,9 +163,9 @@ export default function ConfigurationUsbSection({
                 control={<Radio />}
                 label={
                   <Box>
-                    <Typography variant="body1">Temporary (Recommended)</Typography>
+                    <Typography variant="body1">{t('configuration.usb.temporary')}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Applies on the next boot once, then clears automatically.
+                      {t('configuration.usb.temporaryDesc')}
                     </Typography>
                   </Box>
                 }
@@ -173,9 +175,9 @@ export default function ConfigurationUsbSection({
                 control={<Radio />}
                 label={
                   <Box>
-                    <Typography variant="body1">Permanent</Typography>
+                    <Typography variant="body1">{t('configuration.usb.permanent')}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      The selected USB mode is reused on every system boot.
+                      {t('configuration.usb.permanentDesc')}
                     </Typography>
                   </Box>
                 }
@@ -193,7 +195,7 @@ export default function ConfigurationUsbSection({
             disabled={hotSwitching || (selectedUsbMode === usbMode?.current_mode && !useHotSwitch)}
             startIcon={hotSwitching ? <CircularProgress size={20} /> : useHotSwitch ? <FlashOn /> : undefined}
           >
-            {hotSwitching ? 'Switching...' : useHotSwitch ? 'Apply hot switch' : 'Save configuration'}
+            {hotSwitching ? t('configuration.usb.switching') : useHotSwitch ? t('configuration.usb.applyHotSwitch') : t('configuration.usb.saveConfig')}
           </Button>
           {!useHotSwitch && (
             <Button
@@ -203,43 +205,43 @@ export default function ConfigurationUsbSection({
               disabled={rebooting}
               startIcon={rebooting ? <CircularProgress size={20} /> : undefined}
             >
-              {rebooting ? 'Rebooting...' : 'Reboot now'}
+              {rebooting ? t('configuration.usb.rebooting') : t('configuration.usb.rebootNow')}
             </Button>
           )}
         </Box>
 
         <Alert severity={useHotSwitch ? 'warning' : 'info'} sx={{ mt: 2 }}>
           <Typography variant="body2" fontWeight={600} gutterBottom>
-            {useHotSwitch ? 'Hot switch notes' : 'Before you apply'}
+            {useHotSwitch ? t('configuration.usb.hotSwitchNotes') : t('configuration.usb.beforeApply')}
           </Typography>
           {useHotSwitch ? (
             <Box component="ul" sx={{ m: 0, pl: 2 }}>
               <Typography component="li" variant="body2">
-                The mode change takes effect immediately and may interrupt connectivity for a short time.
+                {t('configuration.usb.note1')}
               </Typography>
               <Typography component="li" variant="body2">
-                If the hot switch fails, fall back to the reboot-based flow.
+                {t('configuration.usb.note2')}
               </Typography>
               <Typography component="li" variant="body2">
-                Current hardware mode: {usbMode?.current_mode_name || 'N/A'}
+                {t('configuration.usb.currentHardwareMode', { mode: usbMode?.current_mode_name || t('common.na') })}
               </Typography>
             </Box>
           ) : (
             <Box component="ul" sx={{ m: 0, pl: 2 }}>
               <Typography component="li" variant="body2">
-                Saved USB changes only take effect after the next reboot.
+                {t('configuration.usb.savedUsbChanges')}
               </Typography>
               <Typography component="li" variant="body2">
-                Current hardware mode: {usbMode?.current_mode_name || 'N/A'}
+                {t('configuration.usb.currentHardwareMode', { mode: usbMode?.current_mode_name || t('common.na') })}
               </Typography>
               {usbMode?.temporary_mode && (
                 <Typography component="li" variant="body2">
-                  Pending temporary mode: {getModeNameByValue(usbMode.temporary_mode)}
+                  {t('configuration.overview.pendingTemporary', { mode: getModeNameByValue(usbMode.temporary_mode) })}
                 </Typography>
               )}
               {usbMode?.permanent_mode && (
                 <Typography component="li" variant="body2">
-                  Saved permanent mode: {getModeNameByValue(usbMode.permanent_mode)}
+                  {t('configuration.overview.savedPermanent', { mode: getModeNameByValue(usbMode.permanent_mode) })}
                 </Typography>
               )}
             </Box>

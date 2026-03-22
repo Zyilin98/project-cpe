@@ -18,6 +18,7 @@ import {
 } from '@mui/material'
 import { alpha } from '@/utils/theme'
 import { CellTower, ExpandLess, ExpandMore, Info, Visibility, VisibilityOff } from '@mui/icons-material'
+import { useI18n } from '@/contexts/I18nContext'
 import { getSensitiveStyle, formatSignalValue, getSignalChipColor } from '../utils'
 import type { CellsResponse } from '@/api/types'
 
@@ -28,6 +29,7 @@ interface CellInfoProps {
 export function CellInfo({ cellsInfo }: CellInfoProps) {
   const [expanded, setExpanded] = useState(true)
   const [showInfo, setShowInfo] = useState(false)
+  const { t } = useI18n()
 
   return (
     <Card sx={{ overflow: 'hidden' }}>
@@ -45,9 +47,9 @@ export function CellInfo({ cellsInfo }: CellInfoProps) {
       >
         <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
           <CellTower fontSize="small" color="primary" />
-          <Typography variant="subtitle1">Cell Map</Typography>
-          <Chip label={`${cellsInfo?.cells?.length || 0} cells`} size="small" variant="outlined" />
-          <Tooltip title={showInfo ? 'Hide sensitive details' : 'Show sensitive details'}>
+          <Typography variant="subtitle1">{t('dashboard.cells.title')}</Typography>
+          <Chip label={t('dashboard.cells.count', { count: cellsInfo?.cells?.length || 0 })} size="small" variant="outlined" />
+          <Tooltip title={showInfo ? t('dashboard.cells.hideSensitive') : t('dashboard.cells.showSensitive')}>
             <IconButton
               size="small"
               onClick={(event: MouseEvent) => {
@@ -93,12 +95,12 @@ export function CellInfo({ cellsInfo }: CellInfoProps) {
             <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell>Band</TableCell>
-                  <TableCell align="right">ARFCN</TableCell>
-                  <TableCell align="right">PCI</TableCell>
-                  <TableCell align="right">RSRP</TableCell>
-                  <TableCell align="right">RSRQ</TableCell>
-                  <TableCell align="right">SINR</TableCell>
+                  <TableCell>{t('dashboard.cells.band')}</TableCell>
+                  <TableCell align="right">{t('dashboard.cells.arfcn')}</TableCell>
+                  <TableCell align="right">{t('dashboard.cells.pci')}</TableCell>
+                  <TableCell align="right">{t('dashboard.cells.rsrp')}</TableCell>
+                  <TableCell align="right">{t('dashboard.cells.rsrq')}</TableCell>
+                  <TableCell align="right">{t('dashboard.cells.sinr')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -152,7 +154,7 @@ export function CellInfo({ cellsInfo }: CellInfoProps) {
                       <Box display="flex" alignItems="center" justifyContent="center" gap={1} py={2}>
                         <Info fontSize="small" color="disabled" />
                         <Typography variant="body2" color="text.secondary">
-                          No cell information available.
+                          {t('dashboard.cells.noInfo')}
                         </Typography>
                       </Box>
                     </TableCell>

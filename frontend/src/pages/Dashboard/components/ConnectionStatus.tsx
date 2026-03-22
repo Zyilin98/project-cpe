@@ -1,6 +1,7 @@
 import { Box, Chip, Stack, Typography } from '@mui/material'
 import { Router, Wifi } from '@mui/icons-material'
 import type { QosInfo } from '@/api/types'
+import { useI18n } from '@/contexts/I18nContext'
 import type { ConnectivityResult } from '../hooks/useDashboardData'
 import { DashboardPanel } from './DashboardPanel'
 
@@ -10,25 +11,26 @@ interface ConnectionStatusProps {
 }
 
 export function ConnectionStatus({ qosInfo, connectivity }: ConnectionStatusProps) {
+  const { t } = useI18n()
   const metrics = [
     {
-      label: 'QCI',
+      label: t('dashboard.connection.qci'),
       value: qosInfo?.qci || '-',
     },
     {
-      label: 'Downlink',
+      label: t('dashboard.connection.downlink'),
       value: qosInfo?.dl_speed ? `${(qosInfo.dl_speed / 1000).toFixed(0)} Mbps` : '-',
     },
     {
-      label: 'Uplink',
+      label: t('dashboard.connection.uplink'),
       value: qosInfo?.ul_speed ? `${(qosInfo.ul_speed / 1000).toFixed(0)} Mbps` : '-',
     },
   ]
 
   return (
     <DashboardPanel
-      title="Connection Status"
-      subtitle="QoS class and internet reachability"
+      title={t('dashboard.connection.title')}
+      subtitle={t('dashboard.connection.subtitle')}
       icon={<Router color="primary" />}
     >
       <Stack spacing={1.5}>
@@ -64,17 +66,17 @@ export function ConnectionStatus({ qosInfo, connectivity }: ConnectionStatusProp
           <Box display="flex" alignItems="center" gap={1} mb={1}>
             <Wifi color="primary" fontSize="small" />
             <Typography variant="body2" fontWeight={600}>
-              Reachability
+              {t('dashboard.connection.reachability')}
             </Typography>
           </Box>
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             <Chip
-              label={connectivity?.ipv4?.success ? `IPv4 ${connectivity.ipv4.latency_ms?.toFixed(0)}ms` : 'IPv4 offline'}
+              label={connectivity?.ipv4?.success ? t('dashboard.connection.latency', { version: 'IPv4', value: connectivity.ipv4.latency_ms?.toFixed(0) || '-' }) : t('dashboard.connection.offline', { version: 'IPv4' })}
               color={connectivity?.ipv4?.success ? 'success' : 'error'}
               variant="outlined"
             />
             <Chip
-              label={connectivity?.ipv6?.success ? `IPv6 ${connectivity.ipv6.latency_ms?.toFixed(0)}ms` : 'IPv6 offline'}
+              label={connectivity?.ipv6?.success ? t('dashboard.connection.latency', { version: 'IPv6', value: connectivity.ipv6.latency_ms?.toFixed(0) || '-' }) : t('dashboard.connection.offline', { version: 'IPv6' })}
               color={connectivity?.ipv6?.success ? 'success' : 'error'}
               variant="outlined"
             />

@@ -1,6 +1,7 @@
 import { Box, Chip, Typography } from '@mui/material'
 import Grid from '@mui/material/Grid'
 import { Thermostat } from '@mui/icons-material'
+import { useI18n } from '@/contexts/I18nContext'
 import { getTempColor } from '../utils'
 import type { SystemStatsResponse } from '@/api/types'
 import { DashboardPanel } from './DashboardPanel'
@@ -10,6 +11,7 @@ interface TemperatureMonitorProps {
 }
 
 export function TemperatureMonitor({ systemStats }: TemperatureMonitorProps) {
+  const { t } = useI18n()
   const sensors = systemStats?.temperature || []
   const averageTemp = sensors.length > 0
     ? sensors.reduce((sum, sensor) => sum + sensor.temperature, 0) / sensors.length
@@ -17,11 +19,11 @@ export function TemperatureMonitor({ systemStats }: TemperatureMonitorProps) {
 
   return (
     <DashboardPanel
-      title="Thermal Monitor"
-      subtitle="Sensor snapshots across the device"
+      title={t('dashboard.thermal.title')}
+      subtitle={t('dashboard.thermal.subtitle')}
       icon={<Thermostat color="primary" />}
       action={averageTemp !== null ? (
-        <Chip label={`Avg ${averageTemp.toFixed(1)} deg C`} color={getTempColor(averageTemp)} />
+        <Chip label={t('dashboard.thermal.average', { value: averageTemp.toFixed(1) })} color={getTempColor(averageTemp)} />
       ) : undefined}
     >
       {sensors.length > 0 ? (
@@ -41,7 +43,7 @@ export function TemperatureMonitor({ systemStats }: TemperatureMonitorProps) {
                   {sensor.type}
                 </Typography>
                 <Typography variant="h6" color={`${getTempColor(sensor.temperature)}.main`} sx={{ mt: 0.5 }}>
-                  {sensor.temperature.toFixed(1)} deg
+                  {t('dashboard.thermal.value', { value: sensor.temperature.toFixed(1) })}
                 </Typography>
               </Box>
             </Grid>
@@ -49,7 +51,7 @@ export function TemperatureMonitor({ systemStats }: TemperatureMonitorProps) {
         </Grid>
       ) : (
         <Typography variant="body2" color="text.secondary">
-          No temperature sensors reported by the backend.
+          {t('dashboard.thermal.noSensors')}
         </Typography>
       )}
     </DashboardPanel>

@@ -2,6 +2,7 @@ import { Alert, Box, CircularProgress, Paper, Snackbar } from '@mui/material'
 import { DEFAULT_CALL_TEMPLATE, DEFAULT_SMS_TEMPLATE } from '../api/types'
 import ErrorSnackbar from '../components/ErrorSnackbar'
 import PageHero from '../components/PageHero'
+import { useI18n } from '../contexts/I18nContext'
 import { alpha } from '../utils/theme'
 import ConfigurationAirplaneSection from './Configuration/components/ConfigurationAirplaneSection'
 import ConfigurationDataSection from './Configuration/components/ConfigurationDataSection'
@@ -11,6 +12,7 @@ import ConfigurationWebhookSection from './Configuration/components/Configuratio
 import useConfigurationPageController from './Configuration/hooks/useConfigurationPageController'
 
 export default function ConfigurationPage() {
+  const { t } = useI18n()
   const {
     loading,
     error,
@@ -81,13 +83,13 @@ export default function ConfigurationPage() {
       }}
     >
       <PageHero
-        eyebrow="System workspace"
-        title="Configuration"
-        description="Adjust connectivity policy, USB behavior and webhook forwarding inside the same expressive control surface."
+        eyebrow={t('configuration.page.eyebrow')}
+        title={t('configuration.page.title')}
+        description={t('configuration.page.description')}
         chips={[
-          usbMode?.current_mode_name || 'USB unknown',
-          healthStatus?.status === 'ok' ? 'Backend healthy' : 'Health pending',
-          webhookConfig.enabled ? 'Webhook enabled' : 'Webhook disabled',
+          usbMode?.current_mode_name || t('configuration.page.usbUnknown'),
+          healthStatus?.status === 'ok' ? t('configuration.page.backendHealthy') : t('configuration.page.healthPending'),
+          webhookConfig.enabled ? t('configuration.page.webhookEnabled') : t('configuration.page.webhookDisabled'),
         ]}
       />
 

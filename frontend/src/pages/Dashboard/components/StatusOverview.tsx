@@ -11,6 +11,7 @@ import {
 } from '@mui/icons-material'
 import { formatCarrierName, getCarrierLogo } from '@/utils/carriers'
 import { getSignalColor } from '../utils'
+import { useI18n } from '@/contexts/I18nContext'
 import type {
   AirplaneModeResponse,
   CellsResponse,
@@ -38,6 +39,7 @@ export function StatusOverview({
   roaming,
 }: StatusOverviewProps) {
   const theme = useTheme<Theme>()
+  const { t } = useI18n()
 
   const carrierName = formatCarrierName(networkInfo?.mcc, networkInfo?.mnc)
   const carrierLogo = getCarrierLogo(networkInfo?.mcc, networkInfo?.mnc)
@@ -57,39 +59,39 @@ export function StatusOverview({
 
   const metrics = [
     {
-      label: 'Technology',
+      label: t('dashboard.status.technology'),
       value: getNetworkTech(),
       icon: <WifiTethering fontSize="small" color="primary" />,
     },
     {
-      label: 'Registration',
+      label: t('dashboard.status.registration'),
       value:
         networkInfo?.registration_status === 'registered'
-          ? 'Registered'
+          ? t('dashboard.status.registered')
           : networkInfo?.registration_status === 'roaming'
-            ? 'Roaming'
-            : networkInfo?.registration_status || 'Unknown',
+            ? t('dashboard.status.roaming')
+            : networkInfo?.registration_status || t('common.unknown'),
       icon: <Router fontSize="small" color="primary" />,
     },
     {
-      label: 'Modem',
-      value: deviceInfo?.online ? 'Online' : 'Offline',
+      label: t('dashboard.status.modem'),
+      value: deviceInfo?.online ? t('common.online') : t('common.offline'),
       icon: <PowerSettingsNew fontSize="small" color="primary" />,
     },
     {
-      label: 'Serving Cell',
+      label: t('dashboard.status.servingCell'),
       value: cellsInfo?.serving_cell?.cell_id || 'N/A',
       icon: <SignalCellularAlt fontSize="small" color="primary" />,
     },
   ]
 
-  const deviceSummary = [deviceInfo?.manufacturer || 'Unknown device', deviceInfo?.model || '', networkInfo?.operator_name || 'Carrier unavailable']
+  const deviceSummary = [deviceInfo?.manufacturer || t('dashboard.status.unknownDevice'), deviceInfo?.model || '', networkInfo?.operator_name || t('dashboard.status.carrierUnavailable')]
     .filter(Boolean)
     .join(' - ')
 
   const operatorSummary = [
-    (networkInfo?.mcc && networkInfo?.mnc) ? `${networkInfo.mcc}-${networkInfo.mnc}` : 'No operator code',
-    networkInfo?.technology_preference || 'No preference',
+    (networkInfo?.mcc && networkInfo?.mnc) ? `${networkInfo.mcc}-${networkInfo.mnc}` : t('dashboard.status.noOperatorCode'),
+    networkInfo?.technology_preference || t('dashboard.status.noPreference'),
   ].join(' - ')
 
   return (
@@ -107,7 +109,7 @@ export function StatusOverview({
       <Box display="flex" justifyContent="space-between" gap={3} flexWrap="wrap" position="relative" zIndex={1}>
         <Stack spacing={1.25} sx={{ minWidth: 0, flex: '1 1 420px' }}>
           <Typography variant="overline" color="text.secondary">
-            Modem status
+            {t('dashboard.status.eyebrow')}
           </Typography>
           <Box display="flex" alignItems="center" gap={1.5} flexWrap="wrap">
             {carrierLogo ? (
@@ -122,12 +124,12 @@ export function StatusOverview({
           </Typography>
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             <Chip label={getNetworkTech()} color={getNetworkTech() === '5G' || getNetworkTech() === 'NR' ? 'success' : 'primary'} />
-            {imsStatus?.registered && <Chip label="VoLTE ready" color="info" variant="outlined" />}
-            {airplaneMode?.enabled && <Chip icon={<FlightTakeoff />} label="Airplane mode" color="warning" variant="outlined" />}
+            {imsStatus?.registered && <Chip label={t('dashboard.status.volteReady')} color="info" variant="outlined" />}
+            {airplaneMode?.enabled && <Chip icon={<FlightTakeoff />} label={t('dashboard.status.airplaneMode')} color="warning" variant="outlined" />}
             {roaming?.is_roaming && (
               <Chip
                 icon={<TravelExplore />}
-                label={roaming.roaming_allowed ? 'Roaming enabled' : 'Roaming blocked'}
+                label={roaming.roaming_allowed ? t('dashboard.status.roamingEnabled') : t('dashboard.status.roamingBlocked')}
                 color={roaming.roaming_allowed ? 'info' : 'error'}
                 variant="outlined"
               />
@@ -147,7 +149,7 @@ export function StatusOverview({
           }}
         >
           <Typography variant="caption" color="text.secondary">
-            Signal quality
+            {t('dashboard.status.signalQuality')}
           </Typography>
           <Box display="flex" alignItems="flex-end" gap={1} mt={1}>
             <SignalCellularAlt sx={{ color: `${signalColor}.main`, fontSize: 30 }} />

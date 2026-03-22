@@ -1,6 +1,7 @@
 import { Box, Chip, Stack, Switch, Typography } from '@mui/material'
 import { FlightTakeoff, NetworkCheck, TravelExplore } from '@mui/icons-material'
 import type { AirplaneModeResponse, RoamingResponse } from '@/api/types'
+import { useI18n } from '@/contexts/I18nContext'
 import { DashboardPanel } from './DashboardPanel'
 
 interface QuickControlsProps {
@@ -20,12 +21,13 @@ export function QuickControls({
   onToggleAirplaneMode,
   onToggleRoaming,
 }: QuickControlsProps) {
+  const { t } = useI18n()
   const controls = [
     {
       key: 'data',
       icon: <NetworkCheck color={dataStatus ? 'success' : 'disabled'} />,
-      title: 'Mobile data',
-      description: dataStatus ? 'Mobile data path is active' : 'Cellular data is paused',
+      title: t('dashboard.quickControls.mobileData'),
+      description: dataStatus ? t('dashboard.quickControls.mobileDataActive') : t('dashboard.quickControls.mobileDataPaused'),
       checked: dataStatus,
       color: 'success' as const,
       onChange: onToggleData,
@@ -33,18 +35,18 @@ export function QuickControls({
     {
       key: 'roaming',
       icon: <TravelExplore color={roaming?.roaming_allowed ? 'info' : 'disabled'} />,
-      title: 'Data roaming',
-      description: roaming?.is_roaming ? 'Roaming session detected' : 'Roaming follows policy',
+      title: t('dashboard.quickControls.dataRoaming'),
+      description: roaming?.is_roaming ? t('dashboard.quickControls.roamingDetected') : t('dashboard.quickControls.roamingPolicy'),
       checked: roaming?.roaming_allowed || false,
       color: 'info' as const,
       onChange: onToggleRoaming,
-      badge: roaming?.is_roaming ? 'Roaming' : undefined,
+      badge: roaming?.is_roaming ? t('dashboard.quickControls.roamingBadge') : undefined,
     },
     {
       key: 'flight',
       icon: <FlightTakeoff color={airplaneMode?.enabled ? 'warning' : 'disabled'} />,
-      title: 'Airplane mode',
-      description: airplaneMode?.enabled ? 'Radio stack is muted' : 'Radio stack is online',
+      title: t('dashboard.quickControls.airplaneMode'),
+      description: airplaneMode?.enabled ? t('dashboard.quickControls.radioMuted') : t('dashboard.quickControls.radioOnline'),
       checked: airplaneMode?.enabled || false,
       color: 'warning' as const,
       onChange: onToggleAirplaneMode,
@@ -53,8 +55,8 @@ export function QuickControls({
 
   return (
     <DashboardPanel
-      title="Quick Controls"
-      subtitle="Fast actions for radio policy and data behavior"
+      title={t('dashboard.quickControls.title')}
+      subtitle={t('dashboard.quickControls.subtitle')}
       icon={<NetworkCheck color="primary" />}
     >
       <Stack spacing={1.25}>

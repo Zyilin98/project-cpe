@@ -57,6 +57,7 @@ import {
 } from '../api'
 import ErrorSnackbar from '../components/ErrorSnackbar'
 import PageHero from '../components/PageHero'
+import { useI18n } from '../contexts/I18nContext'
 import { alpha } from '../utils/theme'
 
 const dialpadButtons = [
@@ -67,6 +68,7 @@ const dialpadButtons = [
 ]
 
 export default function PhonePage() {
+  const { t, formatDate, formatTime: formatLocaleTime } = useI18n()
   const [tabValue, setTabValue] = useState(0)
   const [calls, setCalls] = useState<CallInfo[]>([])
   const [dialNumber, setDialNumber] = useState('')
@@ -193,7 +195,7 @@ export default function PhonePage() {
 
   const handleDial = async () => {
     if (!dialNumber.trim()) {
-      setError('Please enter a phone number.')
+      setError(t('phone.actions.enterPhoneNumber'))
       return
     }
 
@@ -204,7 +206,7 @@ export default function PhonePage() {
     try {
       const response = await api.dialCall(dialNumber)
       if (response.status === 'ok') {
-        setSuccess(`Dialing ${dialNumber}...`)
+        setSuccess(t('phone.actions.dialing', { number: dialNumber }))
         setDialNumber('')
         void fetchCalls()
       } else {
@@ -224,7 +226,7 @@ export default function PhonePage() {
     try {
       const response = await api.hangupAllCalls()
       if (response.status === 'ok') {
-        setSuccess('Ended all active calls.')
+        setSuccess(t('phone.actions.endedAll'))
         void fetchCalls()
       } else {
         setError(response.message)
@@ -241,7 +243,7 @@ export default function PhonePage() {
     try {
       const response = await api.answerCall(path)
       if (response.status === 'ok') {
-        setSuccess(`Answered ${phoneNumber}.`)
+        setSuccess(t('phone.actions.answered', { number: phoneNumber }))
         void fetchCalls()
       } else {
         setError(response.message)
@@ -260,7 +262,7 @@ export default function PhonePage() {
     try {
       const response = await api.deleteCallRecord(id)
       if (response.status === 'ok') {
-        setSuccess('Call record deleted.')
+        setSuccess(t('phone.actions.deletedRecord'))
         void fetchCallHistory()
       } else {
         setError(response.message)
@@ -275,7 +277,7 @@ export default function PhonePage() {
     try {
       const response = await api.clearCallHistory()
       if (response.status === 'ok') {
-        setSuccess('Call history cleared.')
+        setSuccess(t('phone.actions.historyCleared'))
         void fetchCallHistory()
       } else {
         setError(response.message)
@@ -294,7 +296,7 @@ export default function PhonePage() {
         muted,
       })
       if (response.status === 'ok') {
-        setSuccess('Audio settings saved.')
+        setSuccess(t('phone.actions.audioSaved'))
         void fetchVolume()
       } else {
         setError(response.message)
@@ -315,7 +317,7 @@ export default function PhonePage() {
         timeout: forwardType === 'noreply' ? forwardTimeout : undefined,
       })
       if (response.status === 'ok') {
-        setSuccess('Call forwarding settings saved.')
+        setSuccess(t('phone.actions.forwardingSaved'))
         void fetchForwarding()
       } else {
         setError(response.message)
@@ -332,7 +334,7 @@ export default function PhonePage() {
     try {
       const response = await api.setCallSettings({ property, value })
       if (response.status === 'ok') {
-        setSuccess('Call setting updated.')
+        setSuccess(t('phone.actions.settingUpdated'))
         void fetchCallSettings()
       } else {
         setError(response.message)
@@ -346,14 +348,24 @@ export default function PhonePage() {
 
   const getStateLabel = (state: string) => {
     const labels: Record<string, string> = {
-      active: 'Active',
-      dialing: 'Dialing',
-      alerting: 'Ringing',
-      incoming: 'Incoming',
-      held: 'On hold',
+      active: t('phone.states.active'),
+      dialing: t('phone.states.dialing'),
+      alerting: t('phone.states.ringing'),
+      incoming: t('phone.states.incoming'),
+      held: t('phone.states.held'),
     }
 
     return labels[state] || state
+  }
+
+  const getDirectionLabel = (direction: string) => {
+    const labels: Record<string, string> = {
+      incoming: t('phone.directions.incoming'),
+      outgoing: t('phone.directions.outgoing'),
+      missed: t('phone.directions.missed'),
+    }
+
+    return labels[direction] || direction
   }
 
   const formatDuration = (seconds: number) => {
@@ -362,15 +374,15 @@ export default function PhonePage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  const formatTime = (timestamp: string) => {
+  const formatCallTime = (timestamp: string) => {
     try {
       const date = new Date(timestamp)
       const now = new Date()
       const isToday = date.toDateString() === now.toDateString()
       if (isToday) {
-        return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+        return formatLocaleTime(date)
       }
-      return date.toLocaleDateString('zh-CN', {
+      return formatDate(date, {
         month: '2-digit',
         day: '2-digit',
         hour: '2-digit',
@@ -392,13 +404,13 @@ export default function PhonePage() {
   return (
     <Box>
       <PageHero
-        eyebrow="Voice workspace"
-        title="Phone"
-        description="Legacy voice controls are kept here as an experimental workspace. Active-call monitoring and history remain available, but behavior can vary by firmware."
+        eyebrow={t('phone.page.eyebrow')}
+        title={t('phone.page.title')}
+        description={t('phone.page.description')}
         chips={[
-          calls.length > 0 ? `${calls.length} active calls` : 'No active calls',
-          `${callHistory.length} history entries`,
-          'Experimental voice stack',
+          calls.length > 0 ? t('phone.page.activeCalls', { count: calls.length }) : t('phone.page.noActiveCalls'),
+          t('phone.page.historyEntries', { count: callHistory.length }),
+          t('phone.page.experimental'),
         ]}
         actions={
           <Button
@@ -407,7 +419,7 @@ export default function PhonePage() {
             disabled={refreshing}
             startIcon={refreshing ? <CircularProgress size={16} /> : <Refresh />}
           >
-            {refreshing ? 'Refreshing...' : 'Refresh workspace'}
+            {refreshing ? t('phone.page.refreshing') : t('phone.page.refreshWorkspace')}
           </Button>
         }
       />
@@ -420,7 +432,7 @@ export default function PhonePage() {
       </Snackbar>
 
       <Alert severity="warning" sx={{ mb: 3, borderRadius: 4 }}>
-        Voice features on this device are currently treated as best-effort. The UI exposes the controls, but the modem or firmware may not complete every action reliably.
+        {t('phone.page.warning')}
       </Alert>
 
       {calls.length > 0 && (
@@ -440,11 +452,11 @@ export default function PhonePage() {
               </Avatar>
               <Box>
                 <Typography variant="h6" fontWeight={700}>
-                  {calls.length === 1 ? calls[0].phone_number : `${calls.length} active calls`}
+                  {calls.length === 1 ? calls[0].phone_number : t('phone.page.activeCalls', { count: calls.length })}
                 </Typography>
                 {calls.length === 1 && (
                   <Typography variant="body2" sx={{ opacity: 0.88 }}>
-                    {getStateLabel(calls[0].state)} · {calls[0].direction === 'incoming' ? 'Incoming' : 'Outgoing'}
+                    {getStateLabel(calls[0].state)} · {getDirectionLabel(calls[0].direction)}
                   </Typography>
                 )}
               </Box>
@@ -458,11 +470,11 @@ export default function PhonePage() {
                   startIcon={<Call />}
                   onClick={() => void handleAnswer(calls[0].path, calls[0].phone_number)}
                 >
-                  Answer
+                  {t('phone.liveMonitor.answer')}
                 </Button>
               )}
               <Button variant="contained" color="error" startIcon={<CallEnd />} onClick={() => void handleHangupAll()}>
-                {calls.length > 1 ? 'End all calls' : 'End call'}
+                {calls.length > 1 ? t('phone.liveMonitor.endAllCalls') : t('phone.liveMonitor.endCall')}
               </Button>
             </Box>
           </Box>
@@ -493,9 +505,9 @@ export default function PhonePage() {
         })}
       >
         <Tabs value={tabValue} onChange={(_event, value) => setTabValue(value)} variant="scrollable" scrollButtons="auto">
-          <Tab icon={<Dialpad />} label="Dialer" iconPosition="start" />
-          <Tab icon={<History />} label="History" iconPosition="start" />
-          <Tab icon={<Settings />} label="Voice Lab" iconPosition="start" />
+          <Tab icon={<Dialpad />} label={t('phone.tabs.dialer')} iconPosition="start" />
+          <Tab icon={<History />} label={t('phone.tabs.history')} iconPosition="start" />
+          <Tab icon={<Settings />} label={t('phone.tabs.voiceLab')} iconPosition="start" />
         </Tabs>
       </Paper>
 
@@ -504,17 +516,17 @@ export default function PhonePage() {
           <Grid size={{ xs: 12, md: 5 }}>
             <Paper sx={{ p: 3, borderRadius: 5, height: '100%' }}>
               <Typography variant="h6" fontWeight={700} gutterBottom>
-                Dial pad
+                {t('phone.dialer.title')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Use this area for quick outbound calls or to paste a number from your clipboard.
+                {t('phone.dialer.subtitle')}
               </Typography>
 
               <TextField
                 fullWidth
                 value={dialNumber}
                 onChange={(event: ChangeEvent<HTMLInputElement>) => setDialNumber(event.target.value)}
-                placeholder="Enter a phone number"
+                placeholder={t('phone.dialer.placeholder')}
                 slotProps={{
                   input: {
                     endAdornment: dialNumber ? (
@@ -560,7 +572,7 @@ export default function PhonePage() {
                 disabled={dialLoading || !dialNumber.trim()}
                 sx={{ mt: 2, width: '100%', height: 54, borderRadius: 16 }}
               >
-                {dialLoading ? 'Dialing...' : 'Place call'}
+                {dialLoading ? t('phone.dialer.dialing') : t('phone.dialer.placeCall')}
               </Button>
             </Paper>
           </Grid>
@@ -568,14 +580,14 @@ export default function PhonePage() {
           <Grid size={{ xs: 12, md: 7 }}>
             <Paper sx={{ p: 3, borderRadius: 5, mb: 3 }}>
               <Typography variant="h6" fontWeight={700} gutterBottom>
-                Live call monitor
+                {t('phone.liveMonitor.title')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-                Active calls refresh automatically every 3 seconds. Incoming calls can be answered here when firmware support is present.
+                {t('phone.liveMonitor.subtitle')}
               </Typography>
 
               {calls.length === 0 ? (
-                <Alert severity="info">No active calls right now.</Alert>
+                <Alert severity="info">{t('phone.liveMonitor.noActiveCalls')}</Alert>
               ) : (
                 <Box display="flex" flexDirection="column" gap={1.5}>
                   {calls.map((call) => (
@@ -587,7 +599,7 @@ export default function PhonePage() {
                           </Typography>
                           <Box display="flex" gap={1} flexWrap="wrap" mt={0.75}>
                             <Chip label={getStateLabel(call.state)} size="small" color="primary" />
-                            <Chip label={call.direction === 'incoming' ? 'Incoming' : 'Outgoing'} size="small" variant="outlined" />
+                            <Chip label={getDirectionLabel(call.direction)} size="small" variant="outlined" />
                           </Box>
                         </Box>
                         {call.state === 'incoming' && (
@@ -596,7 +608,7 @@ export default function PhonePage() {
                             startIcon={<Call />}
                             onClick={() => void handleAnswer(call.path, call.phone_number)}
                           >
-                            Answer
+                            {t('phone.liveMonitor.answer')}
                           </Button>
                         )}
                       </Box>
@@ -608,17 +620,17 @@ export default function PhonePage() {
 
             <Paper sx={{ p: 3, borderRadius: 5 }}>
               <Typography variant="h6" fontWeight={700} gutterBottom>
-                Operational notes
+                {t('phone.notes.title')}
               </Typography>
               <Box component="ul" sx={{ m: 0, pl: 2.5, color: 'text.secondary' }}>
                 <Typography component="li" variant="body2">
-                  Call controls are exposed for debugging and may behave differently across modem firmware versions.
+                  {t('phone.notes.note1')}
                 </Typography>
                 <Typography component="li" variant="body2">
-                  If dialing does not complete, use this page mainly for monitoring and diagnostics rather than mission-critical telephony.
+                  {t('phone.notes.note2')}
                 </Typography>
                 <Typography component="li" variant="body2">
-                  Call history and audio settings are still useful even when live call control is unreliable.
+                  {t('phone.notes.note3')}
                 </Typography>
               </Box>
             </Paper>
@@ -635,7 +647,7 @@ export default function PhonePage() {
                   {callStats?.total || 0}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Total calls
+                  {t('phone.history.totalCalls')}
                 </Typography>
               </Paper>
             </Grid>
@@ -645,7 +657,7 @@ export default function PhonePage() {
                   {callStats?.incoming || 0}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Incoming
+                  {t('phone.history.incoming')}
                 </Typography>
               </Paper>
             </Grid>
@@ -655,7 +667,7 @@ export default function PhonePage() {
                   {callStats?.outgoing || 0}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Outgoing
+                  {t('phone.history.outgoing')}
                 </Typography>
               </Paper>
             </Grid>
@@ -665,7 +677,7 @@ export default function PhonePage() {
                   {callStats?.missed || 0}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Missed
+                  {t('phone.history.missed')}
                 </Typography>
               </Paper>
             </Grid>
@@ -675,7 +687,7 @@ export default function PhonePage() {
                   {totalDuration}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Total duration
+                  {t('phone.history.totalDuration')}
                 </Typography>
               </Paper>
             </Grid>
@@ -685,10 +697,10 @@ export default function PhonePage() {
             <Box display="flex" justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} gap={2} mb={2.5} flexWrap="wrap">
               <Box>
                 <Typography variant="h6" fontWeight={700}>
-                  Call history
+                  {t('phone.history.title')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Review recent call attempts and reuse a number in the dialer.
+                  {t('phone.history.subtitle')}
                 </Typography>
               </Box>
               <Box display="flex" gap={1}>
@@ -698,7 +710,7 @@ export default function PhonePage() {
                   onClick={() => void fetchCallHistory()}
                   disabled={historyLoading}
                 >
-                  Refresh
+                  {t('phone.history.refresh')}
                 </Button>
                 <Button
                   variant="outlined"
@@ -707,7 +719,7 @@ export default function PhonePage() {
                   onClick={() => setClearDialogOpen(true)}
                   disabled={callHistory.length === 0}
                 >
-                  Clear history
+                  {t('phone.history.clearHistory')}
                 </Button>
               </Box>
             </Box>
@@ -717,7 +729,7 @@ export default function PhonePage() {
                 <CircularProgress />
               </Box>
             ) : callHistory.length === 0 ? (
-              <Alert severity="info">No call history is available yet.</Alert>
+              <Alert severity="info">{t('phone.history.noHistory')}</Alert>
             ) : (
               <Box display="flex" flexDirection="column" gap={1.25}>
                 {callHistory.map((record) => (
@@ -732,18 +744,22 @@ export default function PhonePage() {
                             {record.phone_number}
                           </Typography>
                           <Box display="flex" gap={1} flexWrap="wrap" mt={0.75}>
-                            <Chip label={record.direction} size="small" variant="outlined" />
-                            <Chip label={record.answered ? 'Answered' : 'Unanswered'} size="small" color={record.answered ? 'success' : 'default'} />
+                            <Chip label={getDirectionLabel(record.direction)} size="small" variant="outlined" />
+                            <Chip
+                              label={record.answered ? t('phone.records.answered') : t('phone.records.unanswered')}
+                              size="small"
+                              color={record.answered ? 'success' : 'default'}
+                            />
                             {record.duration > 0 && <Chip label={formatDuration(record.duration)} size="small" />}
                           </Box>
                           <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.75 }}>
-                            {formatTime(record.start_time)}
+                            {formatCallTime(record.start_time)}
                           </Typography>
                         </Box>
                       </Box>
                       <Box display="flex" gap={1}>
                         <Button size="small" variant="outlined" startIcon={<PhoneIcon />} onClick={() => handleDialFromHistory(record.phone_number)}>
-                          Use in dialer
+                          {t('phone.history.useInDialer')}
                         </Button>
                         <IconButton color="error" onClick={() => void handleDeleteRecord(record.id)}>
                           <Delete />
@@ -763,16 +779,16 @@ export default function PhonePage() {
           <Grid size={{ xs: 12, md: 5 }}>
             <Paper sx={{ p: 3, borderRadius: 5, mb: 3 }}>
               <Typography variant="h6" fontWeight={700} gutterBottom>
-                Audio controls
+                {t('phone.audio.title')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-                Speaker and microphone settings are applied through the modem call stack when available.
+                {t('phone.audio.subtitle')}
               </Typography>
 
               <Box mb={3}>
                 <Box display="flex" alignItems="center" mb={1}>
                   <VolumeUp sx={{ mr: 2, color: 'text.secondary' }} />
-                  <Typography sx={{ minWidth: 88 }}>Speaker</Typography>
+                  <Typography sx={{ minWidth: 88 }}>{t('phone.audio.speaker')}</Typography>
                   <Slider
                     value={speakerVolume}
                     onChange={(_event, value) => setSpeakerVolume(Array.isArray(value) ? value[0] : value)}
@@ -785,7 +801,7 @@ export default function PhonePage() {
                 </Box>
                 <Box display="flex" alignItems="center" mb={1}>
                   <Mic sx={{ mr: 2, color: 'text.secondary' }} />
-                  <Typography sx={{ minWidth: 88 }}>Microphone</Typography>
+                  <Typography sx={{ minWidth: 88 }}>{t('phone.audio.microphone')}</Typography>
                   <Slider
                     value={micVolume}
                     onChange={(_event, value) => setMicVolume(Array.isArray(value) ? value[0] : value)}
@@ -801,36 +817,36 @@ export default function PhonePage() {
                   label={
                     <Box display="flex" alignItems="center">
                       <MicOff sx={{ mr: 1 }} />
-                      Mute microphone
+                      {t('phone.audio.muteMicrophone')}
                     </Box>
                   }
                 />
               </Box>
 
               <Button variant="contained" fullWidth onClick={() => void saveVolume()} disabled={volumeLoading}>
-                {volumeLoading ? <CircularProgress size={20} /> : 'Save audio settings'}
+                {volumeLoading ? <CircularProgress size={20} /> : t('phone.audio.save')}
               </Button>
             </Paper>
 
             <Paper sx={{ p: 3, borderRadius: 5 }}>
               <Typography variant="h6" fontWeight={700} gutterBottom>
-                Call behavior
+                {t('phone.behavior.title')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                These modem-side settings can be slow to respond and may not be supported by every network profile.
+                {t('phone.behavior.subtitle')}
               </Typography>
 
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography>Hide caller ID</Typography>
+                <Typography>{t('phone.behavior.hideCallerId')}</Typography>
                 <FormControl size="small" sx={{ minWidth: 140 }}>
                   <Select
                     value={callSettings?.hide_caller_id || 'default'}
                     onChange={(event) => void handleSetCallSetting('HideCallerId', event.target.value)}
                     disabled={settingsLoading}
                   >
-                    <MenuItem value="default">Default</MenuItem>
-                    <MenuItem value="enabled">Enabled</MenuItem>
-                    <MenuItem value="disabled">Disabled</MenuItem>
+                    <MenuItem value="default">{t('phone.behavior.default')}</MenuItem>
+                    <MenuItem value="enabled">{t('phone.behavior.enabled')}</MenuItem>
+                    <MenuItem value="disabled">{t('phone.behavior.disabled')}</MenuItem>
                   </Select>
                 </FormControl>
               </Box>
@@ -838,15 +854,15 @@ export default function PhonePage() {
               <Divider sx={{ my: 2 }} />
 
               <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Typography>Call waiting</Typography>
+                <Typography>{t('phone.behavior.callWaiting')}</Typography>
                 <FormControl size="small" sx={{ minWidth: 140 }}>
                   <Select
                     value={callSettings?.voice_call_waiting || 'enabled'}
                     onChange={(event) => void handleSetCallSetting('VoiceCallWaiting', event.target.value)}
                     disabled={settingsLoading}
                   >
-                    <MenuItem value="enabled">Enabled</MenuItem>
-                    <MenuItem value="disabled">Disabled</MenuItem>
+                    <MenuItem value="enabled">{t('phone.behavior.enabled')}</MenuItem>
+                    <MenuItem value="disabled">{t('phone.behavior.disabled')}</MenuItem>
                   </Select>
                 </FormControl>
               </Box>
@@ -858,10 +874,10 @@ export default function PhonePage() {
               <Box display="flex" justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} gap={2} mb={2.5} flexWrap="wrap">
                 <Box>
                   <Typography variant="h6" fontWeight={700}>
-                    Call forwarding
+                    {t('phone.forwarding.title')}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Fetch and apply forwarding rules if the carrier and modem stack expose them.
+                    {t('phone.forwarding.subtitle')}
                   </Typography>
                 </Box>
                 <Button
@@ -870,42 +886,42 @@ export default function PhonePage() {
                   onClick={() => void fetchForwarding()}
                   disabled={forwardingLoading}
                 >
-                  Refresh rules
+                  {t('phone.forwarding.refreshRules')}
                 </Button>
               </Box>
 
               {forwarding && (
                 <Box display="flex" flexWrap="wrap" gap={1} mb={2.5}>
-                  <Chip icon={<PhoneForwarded />} label={`Always: ${forwarding.voice_unconditional || 'Not set'}`} size="small" variant="outlined" />
-                  <Chip icon={<PhoneForwarded />} label={`Busy: ${forwarding.voice_busy || 'Not set'}`} size="small" variant="outlined" />
-                  <Chip icon={<PhoneForwarded />} label={`No reply: ${forwarding.voice_no_reply || 'Not set'}`} size="small" variant="outlined" />
-                  <Chip icon={<PhoneForwarded />} label={`Unreachable: ${forwarding.voice_not_reachable || 'Not set'}`} size="small" variant="outlined" />
+                  <Chip icon={<PhoneForwarded />} label={`${t('phone.forwarding.always')}: ${forwarding.voice_unconditional || t('phone.forwarding.notSet')}`} size="small" variant="outlined" />
+                  <Chip icon={<PhoneForwarded />} label={`${t('phone.forwarding.busy')}: ${forwarding.voice_busy || t('phone.forwarding.notSet')}`} size="small" variant="outlined" />
+                  <Chip icon={<PhoneForwarded />} label={`${t('phone.forwarding.noReply')}: ${forwarding.voice_no_reply || t('phone.forwarding.notSet')}`} size="small" variant="outlined" />
+                  <Chip icon={<PhoneForwarded />} label={`${t('phone.forwarding.unreachable')}: ${forwarding.voice_not_reachable || t('phone.forwarding.notSet')}`} size="small" variant="outlined" />
                 </Box>
               )}
 
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Forwarding type</InputLabel>
-                <Select value={forwardType} label="Forwarding type" onChange={(event) => setForwardType(event.target.value)}>
-                  <MenuItem value="unconditional">Always</MenuItem>
-                  <MenuItem value="busy">When busy</MenuItem>
-                  <MenuItem value="noreply">No reply</MenuItem>
-                  <MenuItem value="notreachable">Not reachable</MenuItem>
+                <InputLabel>{t('phone.forwarding.forwardType')}</InputLabel>
+                <Select value={forwardType} label={t('phone.forwarding.forwardType')} onChange={(event) => setForwardType(event.target.value)}>
+                  <MenuItem value="unconditional">{t('phone.forwarding.always')}</MenuItem>
+                  <MenuItem value="busy">{t('phone.forwarding.busy')}</MenuItem>
+                  <MenuItem value="noreply">{t('phone.forwarding.noReply')}</MenuItem>
+                  <MenuItem value="notreachable">{t('phone.forwarding.unreachable')}</MenuItem>
                 </Select>
               </FormControl>
 
               <TextField
                 fullWidth
-                label="Forward to"
+                label={t('phone.forwarding.forwardTo')}
                 value={forwardNumber}
                 onChange={(event: ChangeEvent<HTMLInputElement>) => setForwardNumber(event.target.value)}
-                placeholder="Leave empty to disable the selected rule"
+                placeholder={t('phone.forwarding.placeholder')}
                 sx={{ mb: 2 }}
               />
 
               {forwardType === 'noreply' && (
                 <Box mb={2.5}>
                   <Typography variant="body2" gutterBottom>
-                    Timeout: {forwardTimeout}s
+                    {t('phone.forwarding.timeout', { seconds: forwardTimeout })}
                   </Typography>
                   <Slider
                     value={forwardTimeout}
@@ -920,11 +936,11 @@ export default function PhonePage() {
               )}
 
               <Button variant="contained" fullWidth onClick={() => void applyForwarding()} disabled={forwardingLoading}>
-                {forwardingLoading ? 'Saving...' : 'Save forwarding rule'}
+                {forwardingLoading ? t('phone.forwarding.saving') : t('phone.forwarding.save')}
               </Button>
 
               <Alert severity="info" sx={{ mt: 2.5 }}>
-                Forwarding, caller-ID and waiting-state endpoints are kept for diagnostics. On some firmware builds these actions may report success without changing modem behavior.
+                {t('phone.forwarding.info')}
               </Alert>
             </Paper>
           </Grid>
@@ -932,16 +948,16 @@ export default function PhonePage() {
       )}
 
       <Dialog open={clearDialogOpen} onClose={() => setClearDialogOpen(false)}>
-        <DialogTitle>Clear call history?</DialogTitle>
+        <DialogTitle>{t('phone.dialogs.clearHistoryTitle')}</DialogTitle>
         <DialogContent>
           <Typography color="text.secondary">
-            This removes all stored call history entries from the current device view and cannot be undone.
+            {t('phone.dialogs.clearHistoryBody')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setClearDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setClearDialogOpen(false)}>{t('phone.dialogs.cancel')}</Button>
           <Button onClick={() => void handleClearHistory()} color="error" variant="contained">
-            Clear history
+            {t('phone.dialogs.confirmClear')}
           </Button>
         </DialogActions>
       </Dialog>

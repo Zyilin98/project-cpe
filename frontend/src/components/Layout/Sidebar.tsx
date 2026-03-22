@@ -25,6 +25,7 @@ import {
   WebAsset as WebTerminalIcon,
   SystemUpdateAlt as OtaIcon,
 } from '@mui/icons-material'
+import { useI18n } from '@/contexts/I18nContext'
 
 interface SidebarProps {
   drawerWidth: number
@@ -36,27 +37,27 @@ interface SidebarProps {
 
 const menuGroups = [
   {
-    title: 'Overview',
+    titleKey: 'layout.groups.overview',
     items: [
-      { path: '/', label: 'Dashboard', hint: 'Live overview', icon: DashboardIcon },
-      { path: '/device', label: 'Device Info', hint: 'Hardware profile', icon: DevicesIcon },
-      { path: '/network', label: 'Network', hint: 'Radio and carrier', icon: SignalIcon },
+      { path: '/', labelKey: 'layout.items.dashboard.label', hintKey: 'layout.items.dashboard.hint', icon: DashboardIcon },
+      { path: '/device', labelKey: 'layout.items.device.label', hintKey: 'layout.items.device.hint', icon: DevicesIcon },
+      { path: '/network', labelKey: 'layout.items.network.label', hintKey: 'layout.items.network.hint', icon: SignalIcon },
     ],
   },
   {
-    title: 'Communication',
+    titleKey: 'layout.groups.communication',
     items: [
-      { path: '/phone', label: 'Phone', hint: 'Calls and audio', icon: PhoneIcon },
-      { path: '/sms', label: 'SMS', hint: 'Inbox and send', icon: SmsIcon },
+      { path: '/phone', labelKey: 'layout.items.phone.label', hintKey: 'layout.items.phone.hint', icon: PhoneIcon },
+      { path: '/sms', labelKey: 'layout.items.sms.label', hintKey: 'layout.items.sms.hint', icon: SmsIcon },
     ],
   },
   {
-    title: 'Control',
+    titleKey: 'layout.groups.control',
     items: [
-      { path: '/config', label: 'Configuration', hint: 'Policies and system', icon: SettingsIcon },
-      { path: '/ota', label: 'OTA Update', hint: 'Firmware staging', icon: OtaIcon },
-      { path: '/at-console', label: 'AT Console', hint: 'Direct modem commands', icon: TerminalIcon },
-      { path: '/terminal', label: 'Web Terminal', hint: 'Remote shell', icon: WebTerminalIcon },
+      { path: '/config', labelKey: 'layout.items.configuration.label', hintKey: 'layout.items.configuration.hint', icon: SettingsIcon },
+      { path: '/ota', labelKey: 'layout.items.ota.label', hintKey: 'layout.items.ota.hint', icon: OtaIcon },
+      { path: '/at-console', labelKey: 'layout.items.atConsole.label', hintKey: 'layout.items.atConsole.hint', icon: TerminalIcon },
+      { path: '/terminal', labelKey: 'layout.items.terminal.label', hintKey: 'layout.items.terminal.hint', icon: WebTerminalIcon },
     ],
   },
 ]
@@ -70,6 +71,7 @@ export default function Sidebar({
 }: SidebarProps) {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useI18n()
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -89,9 +91,9 @@ export default function Sidebar({
   const drawer = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', p: 1.5 }}>
       <Box
-      sx={(theme) => ({
+        sx={(theme) => ({
           p: 2,
-          borderRadius: 5,
+          borderRadius: 3,
           border: `1px solid ${alpha(theme.palette.divider, 0.75)}`,
           background: `linear-gradient(160deg, ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.12)} 0%, ${alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.42 : 0.84)} 100%)`,
           mb: 2,
@@ -101,14 +103,14 @@ export default function Sidebar({
           <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
             <Box>
               <Typography variant="overline" color="text.secondary">
-                Control Surface
+                {t('layout.summaryEyebrow')}
               </Typography>
               <Typography variant="h6">UDX710</Typography>
             </Box>
-            <Chip label="Online" color="success" size="small" />
+            <Chip label={t('common.online')} color="success" size="small" />
           </Box>
           <Typography variant="body2" color="text.secondary">
-            Expressive control deck for modem, radio and system management.
+            {t('layout.summaryDescription')}
           </Typography>
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             <Chip label={`v${__APP_VERSION__}`} size="small" variant="outlined" />
@@ -119,13 +121,13 @@ export default function Sidebar({
 
       <Stack spacing={1} sx={{ flexGrow: 1 }}>
         {menuGroups.map((group) => (
-          <Box key={group.title}>
+          <Box key={group.titleKey}>
             <Typography
               variant="overline"
               color="text.secondary"
               sx={{ px: 1.5, display: 'block', mb: 0.5 }}
             >
-              {group.title}
+              {t(group.titleKey)}
             </Typography>
             <List sx={{ p: 0 }}>
               {group.items.map((item) => {
@@ -138,7 +140,7 @@ export default function Sidebar({
                       onClick={() => handleNavigation(item.path)}
                       sx={(theme) => ({
                         minHeight: 56,
-                        borderRadius: 5,
+                        borderRadius: 2.5,
                         px: 1.5,
                         alignItems: 'center',
                         transition: theme.transitions.create(['background-color', 'transform']),
@@ -165,8 +167,8 @@ export default function Sidebar({
                         <IconComponent />
                       </ListItemIcon>
                       <ListItemText
-                        primary={item.label}
-                        secondary={item.hint}
+                        primary={t(item.labelKey)}
+                        secondary={t(item.hintKey)}
                         primaryTypographyProps={{ fontWeight: 600 }}
                         secondaryTypographyProps={{ variant: 'caption' }}
                       />
@@ -198,11 +200,11 @@ export default function Sidebar({
         >
           <GitHubIcon sx={{ fontSize: 16 }} />
           <Typography variant="caption" color="inherit" fontWeight={600}>
-            1orz/project-cpe
+            {t('layout.repoLabel1')}
           </Typography>
         </Link>
         <Link
-          href="https://github.com/zyilin98/project-cpe"
+          href="https://github.com/Zyilin98/project-cpe"
           target="_blank"
           rel="noopener noreferrer"
           sx={{
@@ -219,7 +221,7 @@ export default function Sidebar({
         >
           <GitHubIcon sx={{ fontSize: 16 }} />
           <Typography variant="caption" color="inherit" fontWeight={600}>
-            zyilin98/project-cpe
+            {t('layout.repoLabel2')}
           </Typography>
         </Link>
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
