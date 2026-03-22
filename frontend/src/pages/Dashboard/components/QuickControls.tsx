@@ -24,7 +24,7 @@ export function QuickControls({
     {
       key: 'data',
       icon: <NetworkCheck color={dataStatus ? 'success' : 'disabled'} />,
-      title: '鏁版嵁杩炴帴',
+      title: 'Mobile data',
       description: dataStatus ? 'Mobile data path is active' : 'Cellular data is paused',
       checked: dataStatus,
       color: 'success' as const,
@@ -33,7 +33,7 @@ export function QuickControls({
     {
       key: 'roaming',
       icon: <TravelExplore color={roaming?.roaming_allowed ? 'info' : 'disabled'} />,
-      title: '婕父鏁版嵁',
+      title: 'Data roaming',
       description: roaming?.is_roaming ? 'Roaming session detected' : 'Roaming follows policy',
       checked: roaming?.roaming_allowed || false,
       color: 'info' as const,
@@ -43,7 +43,7 @@ export function QuickControls({
     {
       key: 'flight',
       icon: <FlightTakeoff color={airplaneMode?.enabled ? 'warning' : 'disabled'} />,
-      title: '椋炶妯″紡',
+      title: 'Airplane mode',
       description: airplaneMode?.enabled ? 'Radio stack is muted' : 'Radio stack is online',
       checked: airplaneMode?.enabled || false,
       color: 'warning' as const,
@@ -80,20 +80,14 @@ export function QuickControls({
                   <Typography variant="body2" fontWeight={600}>
                     {control.title}
                   </Typography>
-                  {control.badge && (
-                    <Chip label={control.badge} size="small" color="warning" variant="outlined" />
-                  )}
+                  {control.badge && <Chip label={control.badge} size="small" color="warning" variant="outlined" />}
                 </Box>
                 <Typography variant="caption" color="text.secondary">
                   {control.description}
                 </Typography>
               </Box>
             </Box>
-            <Switch
-              checked={control.checked}
-              onChange={control.onChange}
-              color={control.color}
-            />
+            <Switch checked={control.checked} onChange={control.onChange} color={control.color} />
           </Box>
         ))}
       </Stack>

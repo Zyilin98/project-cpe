@@ -89,7 +89,7 @@ export default function Sidebar({
   const drawer = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', p: 1.5 }}>
       <Box
-        sx={(theme) => ({
+      sx={(theme) => ({
           p: 2,
           borderRadius: 5,
           border: `1px solid ${alpha(theme.palette.divider, 0.75)}`,
@@ -138,7 +138,7 @@ export default function Sidebar({
                       onClick={() => handleNavigation(item.path)}
                       sx={(theme) => ({
                         minHeight: 56,
-                        borderRadius: 4,
+                        borderRadius: 5,
                         px: 1.5,
                         alignItems: 'center',
                         transition: theme.transitions.create(['background-color', 'transform']),
@@ -201,11 +201,32 @@ export default function Sidebar({
             1orz/project-cpe
           </Typography>
         </Link>
+        <Link
+          href="https://github.com/zyilin98/project-cpe"
+          target="_blank"
+          rel="noopener noreferrer"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
+            color: 'text.secondary',
+            textDecoration: 'none',
+            fontSize: '0.75rem',
+            '&:hover': {
+              color: 'primary.main',
+            },
+          }}
+        >
+          <GitHubIcon sx={{ fontSize: 16 }} />
+          <Typography variant="caption" color="inherit" fontWeight={600}>
+            zyilin98/project-cpe
+          </Typography>
+        </Link>
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
           v{__APP_VERSION__} ({__GIT_BRANCH__}/{__GIT_COMMIT__})
         </Typography>
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-          Copyright 2025 1orz
+          Copyright 2026 1orz, Zyilin98
         </Typography>
       </Box>
     </Box>

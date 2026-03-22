@@ -78,7 +78,7 @@ function createAppTheme(mode: ThemeMode) {
       ...palette,
     },
     shape: {
-      borderRadius: 18,
+      borderRadius: 6,
     },
     typography: {
       fontFamily: [
@@ -182,7 +182,7 @@ function createAppTheme(mode: ThemeMode) {
         },
         styleOverrides: {
           root: {
-            borderRadius: 28,
+            borderRadius: 6,
             border: `1px solid ${alpha(palette.divider, isDark ? 0.9 : 1)}`,
             backgroundColor: alpha(palette.background.paper, isDark ? 0.88 : 0.9),
             backdropFilter: 'blur(18px)',
@@ -198,7 +198,7 @@ function createAppTheme(mode: ThemeMode) {
         },
         styleOverrides: {
           root: {
-            borderRadius: 24,
+            borderRadius: 6,
           },
           outlined: {
             borderColor: alpha(palette.divider, isDark ? 0.95 : 1),
@@ -213,14 +213,14 @@ function createAppTheme(mode: ThemeMode) {
         styleOverrides: {
           root: {
             minHeight: 42,
-            borderRadius: 16,
+            borderRadius: 6,
             paddingInline: 18,
             textTransform: 'none',
           },
           contained: {
             backgroundImage: `linear-gradient(135deg, ${palette.primary.main}, ${palette.secondary.main})`,
             color: palette.primary.contrastText,
-            boxShadow: `0 14px 30px ${alpha(palette.primary.main, isDark ? 0.24 : 0.2)}`,
+            boxShadow: `0 8px 20px ${alpha(palette.primary.main, isDark ? 0.24 : 0.2)}`,
           },
           outlined: {
             borderColor: alpha(palette.divider, 0.95),
@@ -231,14 +231,14 @@ function createAppTheme(mode: ThemeMode) {
       MuiIconButton: {
         styleOverrides: {
           root: {
-            borderRadius: 16,
+            borderRadius: 6,
           },
         },
       },
       MuiChip: {
         styleOverrides: {
           root: {
-            borderRadius: 14,
+            borderRadius: 6,
             fontWeight: 600,
             backdropFilter: 'blur(10px)',
           },

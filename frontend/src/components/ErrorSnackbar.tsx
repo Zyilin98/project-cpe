@@ -51,6 +51,7 @@ export default function ErrorSnackbar({ error, onClose }: ErrorSnackbarProps) {
         autoHideDuration={6000}
         onClose={handleSnackbarClose}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        sx={{ mt: 14 }}
       >
         <Alert
           severity="error"
@@ -62,7 +63,7 @@ export default function ErrorSnackbar({ error, onClose }: ErrorSnackbarProps) {
                 size="small"
                 color="inherit"
                 onClick={handleDialogOpen}
-                title="查看详情"
+                title="View Error Details"
               >
                 <InfoOutlined fontSize="small" />
               </IconButton>
@@ -77,7 +78,7 @@ export default function ErrorSnackbar({ error, onClose }: ErrorSnackbarProps) {
           }
           sx={{ minWidth: 300 }}
         >
-          请求失败
+          Request Failed
         </Alert>
       </Snackbar>
 
@@ -90,12 +91,12 @@ export default function ErrorSnackbar({ error, onClose }: ErrorSnackbarProps) {
         <DialogTitle>
           <Box display="flex" alignItems="center" gap={1}>
             <InfoOutlined color="error" />
-            错误详情
+            Error Details
           </Box>
         </DialogTitle>
         <DialogContent>
           <Typography variant="body1" gutterBottom fontWeight="medium">
-            错误信息:
+            Error Message:
           </Typography>
           <Box
             sx={{
@@ -110,11 +111,11 @@ export default function ErrorSnackbar({ error, onClose }: ErrorSnackbarProps) {
               overflow: 'auto',
             }}
           >
-            {error || '未知错误'}
+            {error || 'UNKNOWN ERROR'}
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleDialogClose}>关闭</Button>
+          <Button onClick={handleDialogClose}>Close</Button>
         </DialogActions>
       </Dialog>
     </>

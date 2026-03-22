@@ -102,7 +102,7 @@ export default function TopBar({
     >
       <Paper
         sx={{
-          borderRadius: { xs: 4, sm: 5 },
+          borderRadius: 5,
           border: `1px solid ${alpha(muiTheme.palette.divider, 0.9)}`,
           backgroundColor: alpha(muiTheme.palette.background.paper, muiTheme.palette.mode === 'dark' ? 0.8 : 0.84),
           backdropFilter: 'blur(24px)',

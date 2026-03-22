@@ -473,18 +473,18 @@ export default function PhonePage() {
         sx={(theme) => ({
           mb: 2.5,
           p: 1,
-          borderRadius: 5,
+          borderRadius: 4,
           border: `1px solid ${theme.palette.divider}`,
           backgroundColor: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.78 : 0.88),
           '& .MuiTabs-indicator': {
             height: 32,
-            borderRadius: 999,
+            borderRadius: 16,
             backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.3 : 0.16),
             zIndex: 0,
           },
           '& .MuiTab-root': {
             minHeight: 48,
-            borderRadius: 999,
+            borderRadius: 16,
             textTransform: 'none',
             fontWeight: 600,
             position: 'relative',
@@ -558,7 +558,7 @@ export default function PhonePage() {
                 startIcon={dialLoading ? <CircularProgress size={20} color="inherit" /> : <PhoneIcon />}
                 onClick={() => void handleDial()}
                 disabled={dialLoading || !dialNumber.trim()}
-                sx={{ mt: 2, width: '100%', height: 54, borderRadius: 999 }}
+                sx={{ mt: 2, width: '100%', height: 54, borderRadius: 16 }}
               >
                 {dialLoading ? 'Dialing...' : 'Place call'}
               </Button>

@@ -83,26 +83,25 @@ export function StatusOverview({
     },
   ]
 
+  const deviceSummary = [deviceInfo?.manufacturer || 'Unknown device', deviceInfo?.model || '', networkInfo?.operator_name || 'Carrier unavailable']
+    .filter(Boolean)
+    .join(' - ')
+
+  const operatorSummary = [
+    (networkInfo?.mcc && networkInfo?.mnc) ? `${networkInfo.mcc}-${networkInfo.mnc}` : 'No operator code',
+    networkInfo?.technology_preference || 'No preference',
+  ].join(' - ')
+
   return (
     <Paper
       sx={{
         mb: 2.5,
         p: { xs: 2.5, md: 3 },
-        borderRadius: { xs: 5, md: 6 },
+        borderRadius: { xs: 3, md: 4 },
         position: 'relative',
         overflow: 'hidden',
         border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
         background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.24 : 0.12)} 0%, ${alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.88 : 0.94)} 48%, ${alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.22 : 0.12)} 100%)`,
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          inset: 'auto -15% -40% auto',
-          width: 320,
-          height: 320,
-          borderRadius: '50%',
-          background: `radial-gradient(circle, ${alpha(theme.palette.primary.light, 0.26)} 0%, transparent 70%)`,
-          pointerEvents: 'none',
-        },
       }}
     >
       <Box display="flex" justifyContent="space-between" gap={3} flexWrap="wrap" position="relative" zIndex={1}>
@@ -119,7 +118,7 @@ export function StatusOverview({
             </Typography>
           </Box>
           <Typography variant="body1" color="text.secondary">
-            {deviceInfo?.manufacturer || 'Unknown device'} {deviceInfo?.model || ''} · {networkInfo?.operator_name || 'Carrier unavailable'}
+            {deviceSummary}
           </Typography>
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             <Chip label={getNetworkTech()} color={getNetworkTech() === '5G' || getNetworkTech() === 'NR' ? 'success' : 'primary'} />
@@ -142,7 +141,7 @@ export function StatusOverview({
             flex: '0 1 260px',
             alignSelf: 'stretch',
             p: 2,
-            borderRadius: 5,
+            borderRadius: 3,
             backgroundColor: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.62 : 0.72),
             border: `1px solid ${alpha(theme.palette.divider, 0.9)}`,
           }}
@@ -160,7 +159,7 @@ export function StatusOverview({
             </Typography>
           </Box>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            {(networkInfo?.mcc && networkInfo?.mnc) ? `${networkInfo.mcc}-${networkInfo.mnc}` : 'No operator code'} · {networkInfo?.technology_preference || 'No preference'}
+            {operatorSummary}
           </Typography>
         </Box>
       </Box>
@@ -171,7 +170,7 @@ export function StatusOverview({
             <Box
               sx={{
                 p: 1.5,
-                borderRadius: 4,
+                borderRadius: 3,
                 border: `1px solid ${alpha(theme.palette.divider, 0.88)}`,
                 backgroundColor: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.56 : 0.72),
               }}

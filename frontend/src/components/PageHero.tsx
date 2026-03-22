@@ -22,22 +22,11 @@ export default function PageHero({
       sx={(theme) => ({
         p: { xs: 2.5, md: 3 },
         mb: 3,
-        borderRadius: { xs: 5, md: 6 },
+        borderRadius: 5,
         position: 'relative',
         overflow: 'hidden',
         border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
         background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.22 : 0.1)} 0%, ${alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.88 : 0.94)} 50%, ${alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.2 : 0.1)} 100%)`,
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          width: 320,
-          height: 320,
-          right: -120,
-          bottom: -180,
-          borderRadius: '50%',
-          background: `radial-gradient(circle, ${alpha(theme.palette.primary.light, 0.22)} 0%, transparent 70%)`,
-          pointerEvents: 'none',
-        },
       })}
     >
       <Box

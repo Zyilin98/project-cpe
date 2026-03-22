@@ -63,7 +63,7 @@ export default function MainLayout() {
               sm: desktopOpen ? `calc(100% - ${DRAWER_WIDTH}px)` : '100%',
             },
             px: { xs: 2, sm: 3, lg: 4 },
-            pt: { xs: 11, sm: 13 },
+            pt: { xs: 14, sm: 16 },
             pb: { xs: 3, sm: 4 },
             minHeight: '100vh',
             transition: theme.transitions.create(['width', 'margin'], {

@@ -98,9 +98,9 @@ export default function NetworkPage() {
   return (
     <Box
       sx={{
-        '& .MuiCard-root': { borderRadius: 6 },
+        '& .MuiCard-root': { borderRadius: 5 },
         '& .MuiAccordion-root': {
-          borderRadius: 6,
+          borderRadius: 5,
           overflow: 'hidden',
           border: 1,
           borderColor: 'divider',
@@ -129,18 +129,18 @@ export default function NetworkPage() {
         sx={(theme) => ({
           mb: 2.5,
           p: 1,
-          borderRadius: 5,
+          borderRadius: 4,
           border: `1px solid ${theme.palette.divider}`,
           backgroundColor: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.78 : 0.88),
           '& .MuiTabs-indicator': {
             height: 32,
-            borderRadius: 999,
+            borderRadius: 4,
             backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.3 : 0.16),
             zIndex: 0,
           },
           '& .MuiTab-root': {
             minHeight: 48,
-            borderRadius: 999,
+            borderRadius: 4,
             textTransform: 'none',
             fontWeight: 600,
             position: 'relative',
