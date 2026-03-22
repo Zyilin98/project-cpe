@@ -1,14 +1,4 @@
-/*
- * @Author: 1orz cloudorzi@gmail.com
- * @Date: 2025-12-10 10:22:12
- * @LastEditors: 1orz cloudorzi@gmail.com
- * @LastEditTime: 2025-12-13 12:44:42
- * @FilePath: /udx710-backend/frontend/src/pages/Dashboard/index.tsx
- * @Description: 
- * 
- * Copyright (c) 2025 by 1orz, All Rights Reserved. 
- */
-import { Box, CircularProgress } from '@mui/material'
+import { Box, Chip, CircularProgress, Stack, Typography } from '@mui/material'
 import Grid from '@mui/material/Grid'
 import { useRefreshInterval } from '@/contexts/RefreshContext'
 import ErrorSnackbar from '@/components/ErrorSnackbar'
@@ -41,7 +31,27 @@ export default function Dashboard() {
     <Box>
       <ErrorSnackbar error={error} onClose={() => setError(null)} />
 
-      {/* 顶部状态概览 */}
+      <Stack spacing={1} sx={{ mb: 2.5 }}>
+        <Box display="flex" alignItems="center" justifyContent="space-between" gap={2} flexWrap="wrap">
+          <Box>
+            <Typography variant="overline" color="text.secondary">
+              Live overview
+            </Typography>
+            <Typography variant="h4">Dashboard</Typography>
+          </Box>
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+            <Chip
+              label={refreshInterval === 0 ? 'Manual refresh' : `Auto refresh ${refreshInterval / 1000}s`}
+              variant="outlined"
+            />
+            <Chip label={`Refresh key ${refreshKey}`} variant="outlined" />
+          </Stack>
+        </Box>
+        <Typography variant="body1" color="text.secondary">
+          A control-room view of carrier state, system load and live traffic for the current modem session.
+        </Typography>
+      </Stack>
+
       <StatusOverview
         deviceInfo={data.deviceInfo}
         networkInfo={data.networkInfo}
@@ -51,9 +61,7 @@ export default function Dashboard() {
         roaming={data.roaming}
       />
 
-      {/* 主要内容区 - PC端采用更紧凑的多列布局 */}
-      <Grid container spacing={2}>
-        {/* 第一行: 快捷控制 + 连接状态 + SIM卡 + 系统资源 */}
+      <Grid container spacing={2.5}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <QuickControls
             dataStatus={data.dataStatus}
@@ -80,7 +88,6 @@ export default function Dashboard() {
           <SystemResources systemStats={data.systemStats} />
         </Grid>
 
-        {/* 第二行: 实时网速 (宽) + 温度监控 */}
         <Grid size={{ xs: 12, md: 8 }}>
           <NetworkSpeed
             systemStats={data.systemStats}
@@ -92,12 +99,10 @@ export default function Dashboard() {
           <TemperatureMonitor systemStats={data.systemStats} />
         </Grid>
 
-        {/* 第三行: 小区信息 (全宽) */}
         <Grid size={12}>
           <CellInfo cellsInfo={data.cellsInfo} />
         </Grid>
 
-        {/* 第四行: 设备信息 (全宽) */}
         <Grid size={12}>
           <DeviceInfoCard
             deviceInfo={data.deviceInfo}

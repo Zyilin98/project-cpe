@@ -1,26 +1,24 @@
-/*
- * @Author: 1orz cloudorzi@gmail.com
- * @Date: 2025-12-10 10:16:39
- * @LastEditors: 1orz cloudorzi@gmail.com
- * @LastEditTime: 2025-12-13 12:44:31
- * @FilePath: /udx710-backend/frontend/src/pages/Dashboard/components/StatusOverview.tsx
- * @Description: 
- * 
- * Copyright (c) 2025 by 1orz, All Rights Reserved. 
- */
-import { Box, Chip, Typography, Paper, useTheme, type Theme } from '@mui/material'
+import { Box, Chip, Paper, Stack, Typography, useTheme, type Theme } from '@mui/material'
+import Grid from '@mui/material/Grid'
 import { alpha } from '@/utils/theme'
 import {
-  SignalCellularAlt,
-  WifiTethering,
-  Router,
-  PowerSettingsNew,
   FlightTakeoff,
+  PowerSettingsNew,
+  Router,
+  SignalCellularAlt,
   TravelExplore,
+  WifiTethering,
 } from '@mui/icons-material'
-import { formatCarrierName, getCarrierColor, getCarrierLogo } from '@/utils/carriers'
+import { formatCarrierName, getCarrierLogo } from '@/utils/carriers'
 import { getSignalColor } from '../utils'
-import type { DeviceInfo, NetworkInfo, CellsResponse, AirplaneModeResponse, ImsStatusResponse, RoamingResponse } from '@/api/types'
+import type {
+  AirplaneModeResponse,
+  CellsResponse,
+  DeviceInfo,
+  ImsStatusResponse,
+  NetworkInfo,
+  RoamingResponse,
+} from '@/api/types'
 
 interface StatusOverviewProps {
   deviceInfo: DeviceInfo | null
@@ -41,7 +39,11 @@ export function StatusOverview({
 }: StatusOverviewProps) {
   const theme = useTheme<Theme>()
 
-  // 获取网络制式显示
+  const carrierName = formatCarrierName(networkInfo?.mcc, networkInfo?.mnc)
+  const carrierLogo = getCarrierLogo(networkInfo?.mcc, networkInfo?.mnc)
+  const signalStrength = networkInfo?.signal_strength || 0
+  const signalColor = getSignalColor(signalStrength)
+
   const getNetworkTech = () => {
     if (cellsInfo?.serving_cell?.tech) {
       return cellsInfo.serving_cell.tech.toUpperCase()
@@ -53,106 +55,140 @@ export function StatusOverview({
     return 'N/A'
   }
 
+  const metrics = [
+    {
+      label: 'Technology',
+      value: getNetworkTech(),
+      icon: <WifiTethering fontSize="small" color="primary" />,
+    },
+    {
+      label: 'Registration',
+      value:
+        networkInfo?.registration_status === 'registered'
+          ? 'Registered'
+          : networkInfo?.registration_status === 'roaming'
+            ? 'Roaming'
+            : networkInfo?.registration_status || 'Unknown',
+      icon: <Router fontSize="small" color="primary" />,
+    },
+    {
+      label: 'Modem',
+      value: deviceInfo?.online ? 'Online' : 'Offline',
+      icon: <PowerSettingsNew fontSize="small" color="primary" />,
+    },
+    {
+      label: 'Serving Cell',
+      value: cellsInfo?.serving_cell?.cell_id || 'N/A',
+      icon: <SignalCellularAlt fontSize="small" color="primary" />,
+    },
+  ]
+
   return (
     <Paper
-      elevation={0}
       sx={{
-        p: 2,
-        mb: 2,
-        borderRadius: 2,
-        background: (() => {
-          const primaryMain = (theme.palette.primary as { main: string }).main
-          const secondaryMain = (theme.palette.secondary as { main: string }).main
-          return `linear-gradient(135deg, ${alpha(primaryMain, 0.08)} 0%, ${alpha(secondaryMain, 0.03)} 100%)`
-        })(),
-        border: (() => {
-          const primaryMain = (theme.palette.primary as { main: string }).main
-          return `1px solid ${alpha(primaryMain, 0.1)}`
-        })(),
+        mb: 2.5,
+        p: { xs: 2.5, md: 3 },
+        borderRadius: { xs: 5, md: 6 },
+        position: 'relative',
+        overflow: 'hidden',
+        border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
+        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.24 : 0.12)} 0%, ${alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.88 : 0.94)} 48%, ${alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.22 : 0.12)} 100%)`,
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          inset: 'auto -15% -40% auto',
+          width: 320,
+          height: 320,
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${alpha(theme.palette.primary.light, 0.26)} 0%, transparent 70%)`,
+          pointerEvents: 'none',
+        },
       }}
     >
-      <Box display="flex" flexWrap="wrap" alignItems="center" gap={2}>
-        {/* 运营商 Logo + 信号 */}
-        <Box display="flex" alignItems="center" gap={1.5}>
-          {(() => {
-            const logo = getCarrierLogo(networkInfo?.mcc, networkInfo?.mnc)
-            return logo ? (
-              <Box
-                component="img"
-                src={logo}
-                alt={formatCarrierName(networkInfo?.mcc, networkInfo?.mnc)}
-                sx={{ height: 32, width: 'auto', objectFit: 'contain' }}
-              />
-            ) : (
-              <Chip
-                label={formatCarrierName(networkInfo?.mcc, networkInfo?.mnc)}
-                color={getCarrierColor(networkInfo?.mcc, networkInfo?.mnc)}
-                size="small"
-              />
-            )
-          })()}
-          <Box display="flex" alignItems="center" gap={0.5}>
-            <SignalCellularAlt sx={{ fontSize: 24, color: `${getSignalColor(networkInfo?.signal_strength || 0)}.main` }} />
-            <Typography variant="h6" fontWeight="bold" color={`${getSignalColor(networkInfo?.signal_strength || 0)}.main`}>
-              {networkInfo?.signal_strength || 0}%
+      <Box display="flex" justifyContent="space-between" gap={3} flexWrap="wrap" position="relative" zIndex={1}>
+        <Stack spacing={1.25} sx={{ minWidth: 0, flex: '1 1 420px' }}>
+          <Typography variant="overline" color="text.secondary">
+            Modem status
+          </Typography>
+          <Box display="flex" alignItems="center" gap={1.5} flexWrap="wrap">
+            {carrierLogo ? (
+              <Box component="img" src={carrierLogo} alt={carrierName} sx={{ height: 36, width: 'auto', objectFit: 'contain' }} />
+            ) : null}
+            <Typography variant="h3" sx={{ fontSize: { xs: '2rem', md: '2.6rem' } }}>
+              {carrierName}
             </Typography>
           </Box>
+          <Typography variant="body1" color="text.secondary">
+            {deviceInfo?.manufacturer || 'Unknown device'} {deviceInfo?.model || ''} · {networkInfo?.operator_name || 'Carrier unavailable'}
+          </Typography>
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+            <Chip label={getNetworkTech()} color={getNetworkTech() === '5G' || getNetworkTech() === 'NR' ? 'success' : 'primary'} />
+            {imsStatus?.registered && <Chip label="VoLTE ready" color="info" variant="outlined" />}
+            {airplaneMode?.enabled && <Chip icon={<FlightTakeoff />} label="Airplane mode" color="warning" variant="outlined" />}
+            {roaming?.is_roaming && (
+              <Chip
+                icon={<TravelExplore />}
+                label={roaming.roaming_allowed ? 'Roaming enabled' : 'Roaming blocked'}
+                color={roaming.roaming_allowed ? 'info' : 'error'}
+                variant="outlined"
+              />
+            )}
+          </Stack>
+        </Stack>
+
+        <Box
+          sx={{
+            minWidth: { xs: '100%', sm: 220 },
+            flex: '0 1 260px',
+            alignSelf: 'stretch',
+            p: 2,
+            borderRadius: 5,
+            backgroundColor: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.62 : 0.72),
+            border: `1px solid ${alpha(theme.palette.divider, 0.9)}`,
+          }}
+        >
+          <Typography variant="caption" color="text.secondary">
+            Signal quality
+          </Typography>
+          <Box display="flex" alignItems="flex-end" gap={1} mt={1}>
+            <SignalCellularAlt sx={{ color: `${signalColor}.main`, fontSize: 30 }} />
+            <Typography variant="h2" color={`${signalColor}.main`} sx={{ lineHeight: 1 }}>
+              {signalStrength}
+            </Typography>
+            <Typography variant="h6" color="text.secondary" sx={{ mb: 0.4 }}>
+              %
+            </Typography>
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            {(networkInfo?.mcc && networkInfo?.mnc) ? `${networkInfo.mcc}-${networkInfo.mnc}` : 'No operator code'} · {networkInfo?.technology_preference || 'No preference'}
+          </Typography>
         </Box>
-
-        {/* 网络制式 */}
-        <Chip
-          icon={<WifiTethering />}
-          label={getNetworkTech()}
-          color={getNetworkTech() === '5G' || getNetworkTech() === 'NR' ? 'success' : 'primary'}
-          size="small"
-          sx={{ fontWeight: 'bold' }}
-        />
-
-        {/* 注册状态 */}
-        <Chip
-          icon={<Router />}
-          label={
-            networkInfo?.registration_status === 'registered' ? '已注册' : 
-            networkInfo?.registration_status === 'roaming' ? '漫游' :
-            networkInfo?.registration_status || '未知'
-          }
-          color={
-            networkInfo?.registration_status === 'registered' ? 'success' : 
-            networkInfo?.registration_status === 'roaming' ? 'warning' :
-            'default'
-          }
-          variant="outlined"
-          size="small"
-        />
-
-        {/* 漫游状态 */}
-        {roaming?.is_roaming && (
-          <Chip
-            icon={<TravelExplore />}
-            label={roaming.roaming_allowed ? '漫游数据已开启' : '漫游数据已关闭'}
-            color={roaming.roaming_allowed ? 'info' : 'error'}
-            size="small"
-          />
-        )}
-
-        {/* Modem 状态 */}
-        <Chip
-          icon={<PowerSettingsNew />}
-          label={deviceInfo?.online ? '在线' : '离线'}
-          color={deviceInfo?.online ? 'success' : 'error'}
-          size="small"
-        />
-
-        {/* VoLTE */}
-        {imsStatus?.registered && (
-          <Chip label="VoLTE" color="info" size="small" variant="outlined" />
-        )}
-
-        {/* 飞行模式 */}
-        {airplaneMode?.enabled && (
-          <Chip icon={<FlightTakeoff />} label="飞行模式" color="warning" size="small" />
-        )}
       </Box>
+
+      <Grid container spacing={1.25} sx={{ mt: 2, position: 'relative', zIndex: 1 }}>
+        {metrics.map((metric) => (
+          <Grid key={metric.label} size={{ xs: 12, sm: 6, lg: 3 }}>
+            <Box
+              sx={{
+                p: 1.5,
+                borderRadius: 4,
+                border: `1px solid ${alpha(theme.palette.divider, 0.88)}`,
+                backgroundColor: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.56 : 0.72),
+              }}
+            >
+              <Box display="flex" alignItems="center" gap={0.75} mb={1}>
+                {metric.icon}
+                <Typography variant="caption" color="text.secondary">
+                  {metric.label}
+                </Typography>
+              </Box>
+              <Typography variant="body1" fontWeight={700} noWrap>
+                {metric.value}
+              </Typography>
+            </Box>
+          </Grid>
+        ))}
+      </Grid>
     </Paper>
   )
 }

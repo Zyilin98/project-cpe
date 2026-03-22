@@ -1,17 +1,7 @@
-/*
- * @Author: 1orz cloudorzi@gmail.com
- * @Date: 2025-11-23 01:05:03
- * @LastEditors: 1orz cloudorzi@gmail.com
- * @LastEditTime: 2025-12-13 12:43:58
- * @FilePath: /udx710-backend/frontend/src/contexts/ThemeContext.tsx
- * @Description: 
- * 
- * Copyright (c) 2025 by 1orz, All Rights Reserved. 
- */
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles'
+import { alpha, createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 
 type ThemeMode = 'light' | 'dark'
@@ -35,109 +25,184 @@ interface ThemeProviderProps {
   children: ReactNode
 }
 
-export function ThemeProvider({ children }: ThemeProviderProps) {
-  // 从 localStorage 读取保存的主题，默认浅色
-  const [mode, setMode] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem('theme-mode')
-    return (saved === 'dark' ? 'dark' : 'light') as ThemeMode
-  })
+function createAppTheme(mode: ThemeMode) {
+  const isDark = mode === 'dark'
 
-  // 保存主题设置到 localStorage
-  useEffect(() => {
-    localStorage.setItem('theme-mode', mode)
-  }, [mode])
-
-  const toggleTheme = () => {
-    setMode((prev) => (prev === 'light' ? 'dark' : 'light'))
+  const palette = {
+    primary: {
+      main: isDark ? '#72D1CF' : '#0B6E6E',
+      light: isDark ? '#9DE4E0' : '#3C9190',
+      dark: isDark ? '#4AB6B3' : '#084F50',
+      contrastText: isDark ? '#041617' : '#F4FEFE',
+    },
+    secondary: {
+      main: isDark ? '#AEC3E5' : '#566B8D',
+      light: isDark ? '#CDD9F0' : '#7E91AF',
+      dark: isDark ? '#8CA8D2' : '#3D506D',
+      contrastText: isDark ? '#0A1422' : '#F7F9FD',
+    },
+    success: {
+      main: isDark ? '#65D7B7' : '#1F8A70',
+      light: isDark ? '#94E5CC' : '#48A78F',
+      dark: isDark ? '#45BE9B' : '#166652',
+    },
+    warning: {
+      main: isDark ? '#F0B35B' : '#C9821F',
+      light: isDark ? '#F4C784' : '#D79B4B',
+      dark: isDark ? '#DD9A34' : '#956117',
+    },
+    error: {
+      main: isDark ? '#F08C79' : '#C65A46',
+      light: isDark ? '#F4A797' : '#D27B6B',
+      dark: isDark ? '#DA6D56' : '#964333',
+    },
+    info: {
+      main: isDark ? '#86B8FF' : '#3D7BD9',
+      light: isDark ? '#A8CBFF' : '#6899E4',
+      dark: isDark ? '#629FEF' : '#2D5DA7',
+    },
+    background: {
+      default: isDark ? '#091018' : '#F3F6FA',
+      paper: isDark ? '#101925' : '#FBFCFE',
+    },
+    text: {
+      primary: isDark ? '#E7EEF8' : '#172233',
+      secondary: isDark ? '#9AABBF' : '#5C677A',
+    },
+    divider: isDark ? '#233244' : '#D7DEE8',
   }
 
-  const theme = createTheme({
+  return createTheme({
     palette: {
       mode,
-      primary: {
-        main: mode === 'light' ? '#1976d2' : '#90caf9',
-        light: mode === 'light' ? '#42a5f5' : '#e3f2fd',
-        dark: mode === 'light' ? '#1565c0' : '#42a5f5',
-      },
-      secondary: {
-        main: mode === 'light' ? '#dc004e' : '#f48fb1',
-        light: mode === 'light' ? '#f50057' : '#f8bbd0',
-        dark: mode === 'light' ? '#c51162' : '#ec407a',
-      },
-      success: {
-        main: mode === 'light' ? '#2e7d32' : '#66bb6a',
-        light: mode === 'light' ? '#4caf50' : '#81c784',
-        dark: mode === 'light' ? '#1b5e20' : '#388e3c',
-      },
-      warning: {
-        main: mode === 'light' ? '#ed6c02' : '#ffa726',
-        light: mode === 'light' ? '#ff9800' : '#ffb74d',
-        dark: mode === 'light' ? '#e65100' : '#f57c00',
-      },
-      error: {
-        main: mode === 'light' ? '#d32f2f' : '#f44336',
-        light: mode === 'light' ? '#ef5350' : '#e57373',
-        dark: mode === 'light' ? '#c62828' : '#d32f2f',
-      },
-      info: {
-        main: mode === 'light' ? '#0288d1' : '#29b6f6',
-        light: mode === 'light' ? '#03a9f4' : '#4fc3f7',
-        dark: mode === 'light' ? '#01579b' : '#0277bd',
-      },
-      background: {
-        default: mode === 'light' ? '#f5f5f5' : '#121212',
-        paper: mode === 'light' ? '#ffffff' : '#1e1e1e',
-      },
+      ...palette,
+    },
+    shape: {
+      borderRadius: 18,
     },
     typography: {
       fontFamily: [
-        '-apple-system',
-        'BlinkMacSystemFont',
+        '"Aptos"',
+        '"Segoe UI Variable"',
         '"Segoe UI"',
-        'Roboto',
-        '"Helvetica Neue"',
-        'Arial',
+        '"PingFang SC"',
+        '"Noto Sans SC"',
         'sans-serif',
-        '"Apple Color Emoji"',
-        '"Segoe UI Emoji"',
-        '"Segoe UI Symbol"',
       ].join(','),
+      h3: {
+        fontWeight: 700,
+        letterSpacing: '-0.03em',
+      },
       h4: {
-        fontWeight: 600,
+        fontWeight: 700,
+        letterSpacing: '-0.025em',
       },
       h5: {
-        fontWeight: 600,
+        fontWeight: 700,
+        letterSpacing: '-0.02em',
       },
       h6: {
+        fontWeight: 700,
+        letterSpacing: '-0.015em',
+      },
+      subtitle1: {
         fontWeight: 600,
+      },
+      subtitle2: {
+        fontWeight: 600,
+        letterSpacing: '0.01em',
+      },
+      button: {
+        fontWeight: 600,
+        letterSpacing: '0.01em',
       },
     },
     components: {
       MuiCssBaseline: {
         styleOverrides: {
+          '*': {
+            boxSizing: 'border-box',
+          },
+          html: {
+            minHeight: '100%',
+          },
           body: {
-            scrollbarColor: mode === 'dark' ? '#6b6b6b #2b2b2b' : '#c1c1c1 #f1f1f1',
+            minHeight: '100vh',
+            color: palette.text.primary,
+            backgroundColor: palette.background.default,
+            backgroundImage: isDark
+              ? `
+                radial-gradient(circle at top left, ${alpha('#72D1CF', 0.12)}, transparent 28%),
+                radial-gradient(circle at top right, ${alpha('#86B8FF', 0.12)}, transparent 24%),
+                linear-gradient(180deg, #091018 0%, #0D1520 100%)
+              `
+              : `
+                radial-gradient(circle at top left, ${alpha('#72D1CF', 0.18)}, transparent 24%),
+                radial-gradient(circle at top right, ${alpha('#AEC3E5', 0.18)}, transparent 22%),
+                linear-gradient(180deg, #F7FAFD 0%, #EEF3F8 100%)
+              `,
+            backgroundAttachment: 'fixed',
+            '&::before': {
+              content: '""',
+              position: 'fixed',
+              inset: 0,
+              pointerEvents: 'none',
+              backgroundImage: `
+                linear-gradient(${alpha(palette.text.primary, isDark ? 0.05 : 0.03)} 1px, transparent 1px),
+                linear-gradient(90deg, ${alpha(palette.text.primary, isDark ? 0.05 : 0.03)} 1px, transparent 1px)
+              `,
+              backgroundSize: '32px 32px',
+              maskImage: 'linear-gradient(180deg, rgba(0,0,0,0.28), transparent 70%)',
+            },
+            '&::selection': {
+              backgroundColor: alpha(palette.primary.main, 0.24),
+            },
+            scrollbarColor: isDark ? '#41566f #122032' : '#B5C0CD #E7EDF4',
             '&::-webkit-scrollbar, & *::-webkit-scrollbar': {
-              width: 8,
-              height: 8,
+              width: 10,
+              height: 10,
             },
             '&::-webkit-scrollbar-thumb, & *::-webkit-scrollbar-thumb': {
-              borderRadius: 4,
-              backgroundColor: mode === 'dark' ? '#6b6b6b' : '#c1c1c1',
+              borderRadius: 999,
+              backgroundColor: isDark ? '#41566f' : '#B5C0CD',
+              border: `2px solid ${isDark ? '#122032' : '#E7EDF4'}`,
             },
             '&::-webkit-scrollbar-track, & *::-webkit-scrollbar-track': {
-              backgroundColor: mode === 'dark' ? '#2b2b2b' : '#f1f1f1',
+              backgroundColor: isDark ? '#122032' : '#E7EDF4',
             },
+          },
+          '#root': {
+            minHeight: '100vh',
           },
         },
       },
       MuiCard: {
         defaultProps: {
-          elevation: mode === 'dark' ? 3 : 2,
+          elevation: 0,
         },
         styleOverrides: {
           root: {
-            borderRadius: 12,
+            borderRadius: 28,
+            border: `1px solid ${alpha(palette.divider, isDark ? 0.9 : 1)}`,
+            backgroundColor: alpha(palette.background.paper, isDark ? 0.88 : 0.9),
+            backdropFilter: 'blur(18px)',
+            boxShadow: isDark
+              ? `0 24px 70px ${alpha('#02060B', 0.45)}`
+              : `0 22px 55px ${alpha('#8CA0B8', 0.18)}`,
+          },
+        },
+      },
+      MuiPaper: {
+        defaultProps: {
+          elevation: 0,
+        },
+        styleOverrides: {
+          root: {
+            borderRadius: 24,
+          },
+          outlined: {
+            borderColor: alpha(palette.divider, isDark ? 0.95 : 1),
+            backgroundColor: alpha(palette.background.paper, isDark ? 0.72 : 0.86),
           },
         },
       },
@@ -147,39 +212,123 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         },
         styleOverrides: {
           root: {
-            borderRadius: 8,
+            minHeight: 42,
+            borderRadius: 16,
+            paddingInline: 18,
             textTransform: 'none',
-            fontWeight: 500,
+          },
+          contained: {
+            backgroundImage: `linear-gradient(135deg, ${palette.primary.main}, ${palette.secondary.main})`,
+            color: palette.primary.contrastText,
+            boxShadow: `0 14px 30px ${alpha(palette.primary.main, isDark ? 0.24 : 0.2)}`,
+          },
+          outlined: {
+            borderColor: alpha(palette.divider, 0.95),
+            backgroundColor: alpha(palette.background.paper, isDark ? 0.3 : 0.6),
           },
         },
       },
-      MuiPaper: {
+      MuiIconButton: {
         styleOverrides: {
           root: {
-            borderRadius: 12,
-          },
-        },
-      },
-      MuiAppBar: {
-        styleOverrides: {
-          root: {
-            borderRadius: 0,
+            borderRadius: 16,
           },
         },
       },
       MuiChip: {
         styleOverrides: {
           root: {
-            borderRadius: 8,
-            fontWeight: 500,
+            borderRadius: 14,
+            fontWeight: 600,
+            backdropFilter: 'blur(10px)',
+          },
+          outlined: {
+            borderColor: alpha(palette.divider, isDark ? 0.95 : 1),
+            backgroundColor: alpha(palette.background.paper, isDark ? 0.2 : 0.55),
+          },
+        },
+      },
+      MuiDivider: {
+        styleOverrides: {
+          root: {
+            borderColor: alpha(palette.divider, isDark ? 0.7 : 0.85),
+          },
+        },
+      },
+      MuiSwitch: {
+        styleOverrides: {
+          root: {
+            padding: 8,
+          },
+          switchBase: {
+            '&.Mui-checked + .MuiSwitch-track': {
+              opacity: 1,
+            },
+          },
+          thumb: {
+            boxShadow: 'none',
+          },
+          track: {
+            borderRadius: 999,
+            opacity: 1,
+            backgroundColor: alpha(palette.text.secondary, isDark ? 0.35 : 0.22),
+          },
+        },
+      },
+      MuiLinearProgress: {
+        styleOverrides: {
+          root: {
+            borderRadius: 999,
+            backgroundColor: alpha(palette.text.secondary, isDark ? 0.25 : 0.14),
+          },
+        },
+      },
+      MuiTableCell: {
+        styleOverrides: {
+          head: {
+            backgroundColor: alpha(palette.primary.main, isDark ? 0.16 : 0.08),
+            fontWeight: 700,
+            color: palette.text.secondary,
+            borderBottomColor: alpha(palette.divider, 0.9),
+          },
+          body: {
+            borderBottomColor: alpha(palette.divider, 0.7),
+          },
+        },
+      },
+      MuiDrawer: {
+        styleOverrides: {
+          paper: {
+            borderRight: 'none',
+            backgroundImage: isDark
+              ? `linear-gradient(180deg, ${alpha('#101925', 0.94)} 0%, ${alpha('#0C141D', 0.98)} 100%)`
+              : `linear-gradient(180deg, ${alpha('#F8FBFE', 0.96)} 0%, ${alpha('#EEF3F8', 0.98)} 100%)`,
+            backdropFilter: 'blur(20px)',
+            boxShadow: isDark
+              ? `18px 0 40px ${alpha('#02060B', 0.35)}`
+              : `18px 0 40px ${alpha('#8CA0B8', 0.16)}`,
           },
         },
       },
     },
-    shape: {
-      borderRadius: 8,
-    },
   })
+}
+
+export function ThemeProvider({ children }: ThemeProviderProps) {
+  const [mode, setMode] = useState<ThemeMode>(() => {
+    const saved = localStorage.getItem('theme-mode')
+    return (saved === 'dark' ? 'dark' : 'light') as ThemeMode
+  })
+
+  useEffect(() => {
+    localStorage.setItem('theme-mode', mode)
+  }, [mode])
+
+  const toggleTheme = () => {
+    setMode((prev) => (prev === 'light' ? 'dark' : 'light'))
+  }
+
+  const theme = createAppTheme(mode)
 
   return (
     <ThemeContext.Provider value={{ mode, toggleTheme }}>
@@ -190,4 +339,3 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     </ThemeContext.Provider>
   )
 }
-

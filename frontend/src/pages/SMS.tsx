@@ -1,51 +1,42 @@
-/*
- * @Author: 1orz cloudorzi@gmail.com
- * @Date: 2025-12-09 17:34:01
- * @LastEditors: 1orz cloudorzi@gmail.com
- * @LastEditTime: 2025-12-13 12:45:01
- * @FilePath: /udx710-backend/frontend/src/pages/SMS.tsx
- * @Description: 
- * 
- * Copyright (c) 2025 by 1orz, All Rights Reserved. 
- */
-import { useState, useEffect, useRef, useCallback, type ChangeEvent, type KeyboardEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react'
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  TextField,
-  List,
-  ListItemText,
-  ListItemButton,
   Alert,
-  CircularProgress,
-  Chip,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Divider,
-  Paper,
-  Badge,
   Avatar,
-  Snackbar,
-  useMediaQuery,
+  Badge,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  IconButton,
   InputAdornment,
+  List,
+  ListItemButton,
+  ListItemText,
+  Paper,
+  Snackbar,
+  TextField,
+  Typography,
+  useMediaQuery,
 } from '@mui/material'
 import type { Theme } from '@mui/material/styles'
 import {
-  Sms as SmsIcon,
-  Send,
-  Refresh,
-  Person,
-  ArrowBack,
   Add,
+  ArrowBack,
   DeleteSweep,
+  Person,
+  Refresh,
+  Send,
+  Sms as SmsIcon,
 } from '@mui/icons-material'
 import { api, type SmsMessage, type SmsStats } from '../api'
+import ErrorSnackbar from '../components/ErrorSnackbar'
+import PageHero from '../components/PageHero'
+import { alpha } from '../utils/theme'
 
 interface ConversationGroup {
   phoneNumber: string
@@ -56,7 +47,7 @@ interface ConversationGroup {
 
 export default function SMSPage() {
   const isMobile = useMediaQuery<Theme>((theme: Theme) => theme.breakpoints.down('md'))
-  
+
   const [messages, setMessages] = useState<SmsMessage[]>([])
   const [stats, setStats] = useState<SmsStats | null>(null)
   const [loading, setLoading] = useState(false)
@@ -68,24 +59,48 @@ export default function SMSPage() {
   const [clearDialogOpen, setClearDialogOpen] = useState(false)
   const [newChatDialogOpen, setNewChatDialogOpen] = useState(false)
   const [newChatNumber, setNewChatNumber] = useState('')
-  
-  // 对话状态
+
   const [conversations, setConversations] = useState<ConversationGroup[]>([])
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
   const [conversationMessages, setConversationMessages] = useState<SmsMessage[]>([])
   const [conversationLoading, setConversationLoading] = useState(false)
-  
-  // 聊天区域滚动引用
+
   const chatEndRef = useRef<HTMLDivElement>(null)
-  // 输入框焦点状态 - 有焦点时暂停刷新避免失焦
   const inputFocusedRef = useRef(false)
 
-  // 滚动到底部
   const scrollToBottom = useCallback(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [])
 
-  // 获取短信列表
+  const groupConversations = useCallback((items: SmsMessage[]) => {
+    const groups = new Map<string, SmsMessage[]>()
+
+    items.forEach((message) => {
+      const key = message.phone_number
+      if (!groups.has(key)) {
+        groups.set(key, [])
+      }
+      groups.get(key)?.push(message)
+    })
+
+    const conversationList: ConversationGroup[] = []
+    groups.forEach((groupMessages, number) => {
+      groupMessages.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      conversationList.push({
+        phoneNumber: number,
+        messages: groupMessages,
+        lastMessage: groupMessages[0],
+        unreadCount: groupMessages.filter((message) => message.direction === 'incoming' && message.status === 'received').length,
+      })
+    })
+
+    conversationList.sort(
+      (a, b) => new Date(b.lastMessage.timestamp).getTime() - new Date(a.lastMessage.timestamp).getTime(),
+    )
+
+    setConversations(conversationList)
+  }, [])
+
   const fetchMessages = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -102,63 +117,34 @@ export default function SMSPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [groupConversations])
 
-  // 按联系人分组对话
-  const groupConversations = (msgs: SmsMessage[]) => {
-    const groups = new Map<string, SmsMessage[]>()
-    
-    msgs.forEach(msg => {
-      const key = msg.phone_number
-      if (!groups.has(key)) {
-        groups.set(key, [])
-      }
-      groups.get(key)?.push(msg)
-    })
-
-    const conversationList: ConversationGroup[] = []
-    groups.forEach((messages, phoneNumber) => {
-      messages.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      conversationList.push({
-        phoneNumber,
-        messages,
-        lastMessage: messages[0],
-        unreadCount: messages.filter(m => m.direction === 'incoming' && m.status === 'received').length,
-      })
-    })
-
-    conversationList.sort((a, b) => 
-      new Date(b.lastMessage.timestamp).getTime() - new Date(a.lastMessage.timestamp).getTime()
-    )
-
-    setConversations(conversationList)
-  }
-
-  // 获取对话历史
-  const fetchConversation = useCallback(async (phone: string) => {
-    setConversationLoading(true)
-    try {
-      const response = await api.getSmsConversation({ phone_number: phone })
-      if (response.status === 'ok' && response.data) {
-        const sorted = [...response.data].sort((a, b) => 
-          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  const fetchConversation = useCallback(
+    async (phone: string) => {
+      setConversationLoading(true)
+      try {
+        const response = await api.getSmsConversation({ phone_number: phone })
+        if (response.status === 'ok' && response.data) {
+          const sorted = [...response.data].sort(
+            (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+          )
+          setConversationMessages(sorted)
+          setTimeout(scrollToBottom, 100)
+        }
+      } catch {
+        const localMessages = messages.filter((message) => message.phone_number === phone)
+        const sorted = [...localMessages].sort(
+          (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
         )
         setConversationMessages(sorted)
         setTimeout(scrollToBottom, 100)
+      } finally {
+        setConversationLoading(false)
       }
-    } catch {
-      const localMsgs = messages.filter(m => m.phone_number === phone)
-      const sorted = [...localMsgs].sort((a, b) => 
-        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-      )
-      setConversationMessages(sorted)
-      setTimeout(scrollToBottom, 100)
-    } finally {
-      setConversationLoading(false)
-    }
-  }, [messages, scrollToBottom])
+    },
+    [messages, scrollToBottom],
+  )
 
-  // 获取统计信息
   const fetchStats = useCallback(async () => {
     try {
       const response = await api.getSmsStats()
@@ -166,43 +152,42 @@ export default function SMSPage() {
         setStats(response.data)
       }
     } catch (err) {
-      console.error('获取短信统计失败:', err)
+      console.error('Failed to load SMS stats:', err)
     }
   }, [])
 
   useEffect(() => {
     void fetchMessages()
     void fetchStats()
+
     const interval = setInterval(() => {
-      // 输入框有焦点时跳过刷新，避免失焦问题
       if (inputFocusedRef.current) {
         return
       }
       void fetchMessages()
       void fetchStats()
     }, 10000)
+
     return () => clearInterval(interval)
   }, [fetchMessages, fetchStats])
 
-  // 选择对话
   const handleSelectConversation = (phone: string) => {
     setSelectedConversation(phone)
     setPhoneNumber(phone)
     void fetchConversation(phone)
   }
 
-  // 返回对话列表
   const handleBackToList = () => {
     setSelectedConversation(null)
     setConversationMessages([])
   }
 
-  // 开始新对话
   const handleStartNewChat = () => {
     if (!newChatNumber.trim()) {
-      setError('请输入电话号码')
+      setError('Please enter a phone number.')
       return
     }
+
     setNewChatDialogOpen(false)
     setSelectedConversation(newChatNumber)
     setPhoneNumber(newChatNumber)
@@ -210,14 +195,13 @@ export default function SMSPage() {
     setNewChatNumber('')
   }
 
-  // 发送短信
   const handleSend = async () => {
     if (!phoneNumber.trim()) {
-      setError('请输入电话号码')
+      setError('Please enter a phone number.')
       return
     }
     if (!content.trim()) {
-      setError('请输入短信内容')
+      setError('Please enter a message.')
       return
     }
 
@@ -228,7 +212,7 @@ export default function SMSPage() {
     try {
       const response = await api.sendSms(phoneNumber, content)
       if (response.status === 'ok') {
-        setSuccess(`短信已发送到 ${phoneNumber}`)
+        setSuccess(`Message sent to ${phoneNumber}.`)
         setContent('')
         setTimeout(() => {
           void fetchMessages()
@@ -247,7 +231,6 @@ export default function SMSPage() {
     }
   }
 
-  // 清空所有短信
   const handleClearAll = async () => {
     setError(null)
     setSuccess(null)
@@ -256,7 +239,7 @@ export default function SMSPage() {
     try {
       const response = await api.clearAllSms()
       if (response.status === 'ok') {
-        setSuccess('所有短信已清空')
+        setSuccess('All SMS messages were cleared.')
         setMessages([])
         setConversations([])
         setSelectedConversation(null)
@@ -269,7 +252,6 @@ export default function SMSPage() {
     }
   }
 
-  // 格式化时间
   const formatTime = (timestamp: string) => {
     try {
       const date = new Date(timestamp)
@@ -278,13 +260,17 @@ export default function SMSPage() {
       if (isToday) {
         return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
       }
-      return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+      return date.toLocaleDateString('zh-CN', {
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
     } catch {
       return timestamp
     }
   }
 
-  // 格式化简短时间
   const formatShortTime = (timestamp: string) => {
     try {
       const date = new Date(timestamp)
@@ -299,32 +285,48 @@ export default function SMSPage() {
     }
   }
 
-  // 对话列表 JSX
+  const unreadCount = conversations.reduce((total, conversation) => total + conversation.unreadCount, 0)
+
   const conversationListContent = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* 统计信息 */}
       {stats && (
-        <Box display="flex" gap={1} p={2} flexWrap="wrap">
-          <Paper sx={{ p: 1, flex: 1, minWidth: 60, textAlign: 'center' }}>
-            <Typography variant="h6" color="primary" fontWeight={600}>{stats.total}</Typography>
-            <Typography variant="caption" color="text.secondary">总计</Typography>
+        <Box display="grid" gridTemplateColumns="repeat(3, minmax(0, 1fr))" gap={1.25} p={2}>
+          <Paper sx={{ p: 1.25, textAlign: 'center', borderRadius: 3, bgcolor: 'surfaceContainer.main' }}>
+            <Typography variant="h6" color="primary.main" fontWeight={700}>
+              {stats.total}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Total
+            </Typography>
           </Paper>
-          <Paper sx={{ p: 1, flex: 1, minWidth: 60, textAlign: 'center' }}>
-            <Typography variant="h6" color="success.main" fontWeight={600}>{stats.incoming}</Typography>
-            <Typography variant="caption" color="text.secondary">接收</Typography>
+          <Paper sx={{ p: 1.25, textAlign: 'center', borderRadius: 3, bgcolor: 'surfaceContainer.main' }}>
+            <Typography variant="h6" color="success.main" fontWeight={700}>
+              {stats.incoming}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Incoming
+            </Typography>
           </Paper>
-          <Paper sx={{ p: 1, flex: 1, minWidth: 60, textAlign: 'center' }}>
-            <Typography variant="h6" color="info.main" fontWeight={600}>{stats.outgoing}</Typography>
-            <Typography variant="caption" color="text.secondary">发送</Typography>
+          <Paper sx={{ p: 1.25, textAlign: 'center', borderRadius: 3, bgcolor: 'surfaceContainer.main' }}>
+            <Typography variant="h6" color="info.main" fontWeight={700}>
+              {stats.outgoing}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Outgoing
+            </Typography>
           </Paper>
         </Box>
       )}
 
-      {/* 操作栏 */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" px={2} pb={1}>
-        <Typography variant="subtitle1" fontWeight={600}>
-          对话 ({conversations.length})
-        </Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" px={2} pb={1.5}>
+        <Box>
+          <Typography variant="subtitle1" fontWeight={700}>
+            Conversations
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {conversations.length} threads
+          </Typography>
+        </Box>
         <Box display="flex" gap={0.5}>
           <IconButton size="small" color="primary" onClick={() => setNewChatDialogOpen(true)}>
             <Add />
@@ -342,38 +344,54 @@ export default function SMSPage() {
 
       <Divider />
 
-      {/* 对话列表 */}
       {loading && conversations.length === 0 ? (
-        <Box display="flex" justifyContent="center" py={4}><CircularProgress /></Box>
+        <Box display="flex" justifyContent="center" py={5}>
+          <CircularProgress />
+        </Box>
       ) : conversations.length === 0 ? (
-        <Box p={2}><Alert severity="info">暂无对话，点击 + 开始新对话</Alert></Box>
+        <Box p={2}>
+          <Alert severity="info">No conversations yet. Start a new thread from the add button.</Alert>
+        </Box>
       ) : (
-        <List sx={{ flex: 1, overflow: 'auto' }}>
-          {conversations.map((conv, idx) => (
-            <Box key={conv.phoneNumber}>
-              <ListItemButton 
-                onClick={() => handleSelectConversation(conv.phoneNumber)}
-                selected={selectedConversation === conv.phoneNumber}
+        <List sx={{ flex: 1, overflow: 'auto', py: 0.5 }}>
+          {conversations.map((conversation, index) => (
+            <Box key={conversation.phoneNumber}>
+              <ListItemButton
+                onClick={() => handleSelectConversation(conversation.phoneNumber)}
+                selected={selectedConversation === conversation.phoneNumber}
+                sx={{
+                  mx: 1,
+                  my: 0.5,
+                  borderRadius: 3,
+                  alignItems: 'flex-start',
+                }}
               >
-                <Avatar sx={{ mr: 2, bgcolor: 'primary.light' }}><Person /></Avatar>
+                <Avatar sx={{ mr: 2, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
+                  <Person />
+                </Avatar>
                 <ListItemText
                   primary={
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Typography fontWeight={600}>{conv.phoneNumber}</Typography>
-                      <Badge badgeContent={conv.messages.length} color="primary" max={99} />
+                    <Box display="flex" alignItems="center" gap={1} minWidth={0}>
+                      <Typography fontWeight={700} noWrap>
+                        {conversation.phoneNumber}
+                      </Typography>
+                      {conversation.unreadCount > 0 && (
+                        <Badge badgeContent={conversation.unreadCount} color="primary" max={99} />
+                      )}
                     </Box>
                   }
                   secondary={
                     <Typography variant="body2" color="text.secondary" noWrap sx={{ maxWidth: 180 }}>
-                      {conv.lastMessage.direction === 'outgoing' ? '你: ' : ''}{conv.lastMessage.content}
+                      {conversation.lastMessage.direction === 'outgoing' ? 'You: ' : ''}
+                      {conversation.lastMessage.content}
                     </Typography>
                   }
                 />
-                <Typography variant="caption" color="text.secondary">
-                  {formatShortTime(conv.lastMessage.timestamp)}
+                <Typography variant="caption" color="text.secondary" sx={{ pl: 1, whiteSpace: 'nowrap' }}>
+                  {formatShortTime(conversation.lastMessage.timestamp)}
                 </Typography>
               </ListItemButton>
-              {idx < conversations.length - 1 && <Divider />}
+              {index < conversations.length - 1 && <Divider sx={{ mx: 2 }} />}
             </Box>
           ))}
         </List>
@@ -381,18 +399,17 @@ export default function SMSPage() {
     </Box>
   )
 
-  // 聊天区域 JSX
   const chatAreaContent = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* 顶部：联系人信息 */}
-      <Box 
-        sx={{ 
-          p: 2, 
-          borderBottom: 1, 
+      <Box
+        sx={{
+          p: 2,
+          borderBottom: 1,
           borderColor: 'divider',
           display: 'flex',
           alignItems: 'center',
-          gap: 1,
+          gap: 1.25,
+          backgroundColor: 'surfaceContainer.main',
         }}
       >
         {isMobile && (
@@ -400,66 +417,75 @@ export default function SMSPage() {
             <ArrowBack />
           </IconButton>
         )}
-        <Avatar sx={{ bgcolor: 'primary.main' }}><Person /></Avatar>
-        <Typography variant="h6" fontWeight={600}>{selectedConversation}</Typography>
+        <Avatar sx={{ bgcolor: 'primary.main' }}>
+          <Person />
+        </Avatar>
+        <Box minWidth={0}>
+          <Typography variant="h6" fontWeight={700} noWrap>
+            {selectedConversation}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            SMS thread
+          </Typography>
+        </Box>
       </Box>
 
-      {/* 中部：消息气泡 */}
-      <Box 
-        sx={{ 
-          flex: 1, 
-          overflow: 'auto', 
+      <Box
+        sx={(theme) => ({
+          flex: 1,
+          overflow: 'auto',
           p: 2,
-          bgcolor: (theme: Theme) => theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50',
-        }}
+          background: `linear-gradient(180deg, ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.08 : 0.04)} 0%, ${alpha(theme.palette.background.default, 0.9)} 100%)`,
+        })}
       >
         {conversationLoading ? (
-          <Box display="flex" justifyContent="center" py={4}><CircularProgress /></Box>
+          <Box display="flex" justifyContent="center" py={5}>
+            <CircularProgress />
+          </Box>
         ) : conversationMessages.length === 0 ? (
           <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-            <Typography color="text.secondary">开始发送第一条消息</Typography>
+            <Typography color="text.secondary">Start the conversation with your first message.</Typography>
           </Box>
         ) : (
           <>
-            {conversationMessages.map((msg, idx) => (
+            {conversationMessages.map((message, index) => (
               <Box
-                key={msg.id || idx}
+                key={message.id || index}
                 display="flex"
-                justifyContent={msg.direction === 'outgoing' ? 'flex-end' : 'flex-start'}
+                justifyContent={message.direction === 'outgoing' ? 'flex-end' : 'flex-start'}
                 mb={1.5}
               >
                 <Paper
-                  elevation={1}
-                  sx={{
+                  elevation={0}
+                  sx={(theme) => ({
                     p: 1.5,
-                    maxWidth: '75%',
-                    bgcolor: msg.direction === 'outgoing' 
-                      ? 'primary.main' 
-                      : (theme: Theme) => theme.palette.mode === 'dark' ? 'grey.800' : 'white',
-                    color: msg.direction === 'outgoing' 
-                      ? 'white' 
-                      : 'text.primary',
-                    borderRadius: 2,
-                    borderTopRightRadius: msg.direction === 'outgoing' ? 0 : 16,
-                    borderTopLeftRadius: msg.direction === 'incoming' ? 0 : 16,
-                  }}
+                    maxWidth: '78%',
+                    borderRadius: 4,
+                    borderTopRightRadius: message.direction === 'outgoing' ? 1 : 4,
+                    borderTopLeftRadius: message.direction === 'incoming' ? 1 : 4,
+                    color: message.direction === 'outgoing' ? 'primary.contrastText' : 'text.primary',
+                    background:
+                      message.direction === 'outgoing'
+                        ? `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`
+                        : theme.palette.background.paper,
+                    border:
+                      message.direction === 'outgoing'
+                        ? 'none'
+                        : `1px solid ${alpha(theme.palette.divider, 0.9)}`,
+                  })}
                 >
                   <Typography variant="body2" sx={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
-                    {msg.content}
+                    {message.content}
                   </Typography>
-                  <Box display="flex" alignItems="center" justifyContent="flex-end" gap={0.5} mt={0.5}>
-                    <Typography 
-                      variant="caption" 
-                      sx={{ opacity: 0.7 }}
-                    >
-                      {formatTime(msg.timestamp)}
+                  <Box display="flex" alignItems="center" justifyContent="flex-end" gap={0.75} mt={0.75}>
+                    <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                      {formatTime(message.timestamp)}
                     </Typography>
-                    {msg.direction === 'outgoing' && (
-                      msg.status === 'sent' ? (
-                        <Chip label="已发送" size="small" sx={{ height: 16, fontSize: '0.65rem', bgcolor: 'rgba(255,255,255,0.2)' }} />
-                      ) : msg.status === 'failed' ? (
-                        <Chip label="失败" size="small" color="error" sx={{ height: 16, fontSize: '0.65rem' }} />
-                      ) : null
+                    {message.direction === 'outgoing' && message.status === 'sent' && (
+                      <Chip label="Sent" size="small" sx={{ height: 18, fontSize: '0.65rem', bgcolor: 'rgba(255,255,255,0.18)', color: 'inherit' }} />
+                    )}
+                    {message.direction === 'outgoing' && message.status === 'failed' && (
+                      <Chip label="Failed" size="small" color="error" sx={{ height: 18, fontSize: '0.65rem' }} />
                     )}
                   </Box>
                 </Paper>
@@ -470,13 +496,12 @@ export default function SMSPage() {
         )}
       </Box>
 
-      {/* 底部：固定输入框 */}
-      <Box 
-        sx={{ 
-          p: 2, 
-          borderTop: 1, 
+      <Box
+        sx={{
+          p: 2,
+          borderTop: 1,
           borderColor: 'divider',
-          bgcolor: 'background.paper',
+          backgroundColor: 'background.paper',
         }}
       >
         <TextField
@@ -484,14 +509,18 @@ export default function SMSPage() {
           multiline
           maxRows={4}
           value={content}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setContent(e.target.value)}
-          placeholder="输入短信内容..."
+          onChange={(event: ChangeEvent<HTMLInputElement>) => setContent(event.target.value)}
+          placeholder="Write an SMS message..."
           disabled={sendLoading}
-          onFocus={() => { inputFocusedRef.current = true }}
-          onBlur={() => { inputFocusedRef.current = false }}
-          onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
+          onFocus={() => {
+            inputFocusedRef.current = true
+          }}
+          onBlur={() => {
+            inputFocusedRef.current = false
+          }}
+          onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+              event.preventDefault()
               void handleSend()
             }
           }}
@@ -499,11 +528,7 @@ export default function SMSPage() {
             input: {
               endAdornment: (
                 <InputAdornment position="end">
-                  <IconButton
-                    color="primary"
-                    onClick={() => void handleSend()}
-                    disabled={sendLoading || !content.trim()}
-                  >
+                  <IconButton color="primary" onClick={() => void handleSend()} disabled={sendLoading || !content.trim()}>
                     {sendLoading ? <CircularProgress size={24} /> : <Send />}
                   </IconButton>
                 </InputAdornment>
@@ -511,106 +536,122 @@ export default function SMSPage() {
             },
           }}
         />
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-          {content.length} 字符 | Enter 发送，Shift+Enter 换行
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, display: 'block' }}>
+          {content.length} characters. Press `Enter` to send, `Shift+Enter` for a new line.
         </Typography>
       </Box>
     </Box>
   )
 
-  // 空状态提示 JSX
   const emptyStateContent = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 4 }}>
+    <Box
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: 4,
+      }}
+    >
       <SmsIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
       <Typography variant="h6" color="text.secondary" gutterBottom>
-        选择一个对话开始聊天
+        Select a conversation to start messaging
       </Typography>
       <Typography variant="body2" color="text.secondary">
-        或点击左上角 + 开始新对话
+        Or create a new thread from the panel on the left.
       </Typography>
     </Box>
   )
 
   return (
-    <Box sx={{ height: 'calc(100vh - 140px)', minHeight: 500 }}>
-      <Box display="flex" alignItems="center" gap={1} mb={2}>
-        <SmsIcon color="primary" />
-        <Typography variant="h5" fontWeight={600}>
-          短信管理
-        </Typography>
-      </Box>
+    <Box>
+      <PageHero
+        eyebrow="Messaging workspace"
+        title="SMS"
+        description="Monitor inbox activity, manage conversation threads and send outbound messages from a single communications surface."
+        chips={[
+          `${conversations.length} threads`,
+          `${unreadCount} unread`,
+          selectedConversation ? `Active ${selectedConversation}` : 'No thread selected',
+        ]}
+      />
 
-      {/* 错误和成功提示 */}
-      <Snackbar open={!!error} autoHideDuration={4000} onClose={() => setError(null)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-        <Alert severity="error" onClose={() => setError(null)} variant="filled">{error}</Alert>
-      </Snackbar>
+      <ErrorSnackbar error={error} onClose={() => setError(null)} />
       <Snackbar open={!!success} autoHideDuration={3000} onClose={() => setSuccess(null)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-        <Alert severity="success" onClose={() => setSuccess(null)} variant="filled">{success}</Alert>
+        <Alert severity="success" onClose={() => setSuccess(null)} variant="filled">
+          {success}
+        </Alert>
       </Snackbar>
 
-      {/* 主内容区域 */}
-      <Card sx={{ height: 'calc(100% - 48px)' }}>
-        <CardContent sx={{ height: '100%', p: 0, '&:last-child': { pb: 0 } }}>
-          {isMobile ? (
-            // 移动端：对话列表或聊天详情
-            selectedConversation ? chatAreaContent : conversationListContent
-          ) : (
-            // PC端：左右分栏
-            <Box display="flex" height="100%">
-              {/* 左侧：对话列表 */}
-              <Box 
-                sx={{ 
-                  width: 320, 
-                  borderRight: 1, 
-                  borderColor: 'divider',
-                  flexShrink: 0,
-                }}
-              >
-                {conversationListContent}
-              </Box>
-              {/* 右侧：聊天区域 */}
-              <Box sx={{ flex: 1 }}>
-                {selectedConversation ? chatAreaContent : emptyStateContent}
-              </Box>
+      <Paper
+        sx={(theme) => ({
+          height: { xs: 'calc(100vh - 260px)', md: 'calc(100vh - 235px)' },
+          minHeight: 560,
+          overflow: 'hidden',
+          borderRadius: 6,
+          border: `1px solid ${theme.palette.divider}`,
+          backgroundColor: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.84 : 0.92),
+        })}
+      >
+        {isMobile ? (
+          selectedConversation ? chatAreaContent : conversationListContent
+        ) : (
+          <Box display="flex" height="100%">
+            <Box
+              sx={{
+                width: 340,
+                borderRight: 1,
+                borderColor: 'divider',
+                flexShrink: 0,
+                backgroundColor: 'background.paper',
+              }}
+            >
+              {conversationListContent}
             </Box>
-          )}
-        </CardContent>
-      </Card>
+            <Box sx={{ flex: 1 }}>{selectedConversation ? chatAreaContent : emptyStateContent}</Box>
+          </Box>
+        )}
+      </Paper>
 
-      {/* 清空确认对话框 */}
-      <Dialog open={clearDialogOpen} onClose={() => setClearDialogOpen(false)}>
-        <DialogTitle>确认清空</DialogTitle>
+      <Dialog open={clearDialogOpen} onClose={() => setClearDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Clear all messages?</DialogTitle>
         <DialogContent>
-          <Typography>确定要清空所有短信记录吗？此操作不可撤销。</Typography>
+          <Typography color="text.secondary">
+            This removes every SMS record from the local message view. This action cannot be undone.
+          </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setClearDialogOpen(false)}>取消</Button>
-          <Button onClick={() => void handleClearAll()} color="error" variant="contained">确认清空</Button>
+          <Button onClick={() => setClearDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => void handleClearAll()} color="error" variant="contained">
+            Clear all
+          </Button>
         </DialogActions>
       </Dialog>
 
-      {/* 新对话对话框 */}
-      <Dialog open={newChatDialogOpen} onClose={() => setNewChatDialogOpen(false)}>
-        <DialogTitle>新建对话</DialogTitle>
+      <Dialog open={newChatDialogOpen} onClose={() => setNewChatDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Start a new conversation</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             fullWidth
-            label="电话号码"
+            label="Phone number"
             value={newChatNumber}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setNewChatNumber(e.target.value)}
-            placeholder="输入收件人电话号码"
+            onChange={(event: ChangeEvent<HTMLInputElement>) => setNewChatNumber(event.target.value)}
+            placeholder="Enter the recipient number"
             sx={{ mt: 1 }}
-            onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-              if (e.key === 'Enter') {
+            onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
+              if (event.key === 'Enter') {
                 handleStartNewChat()
               }
             }}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setNewChatDialogOpen(false)}>取消</Button>
-          <Button onClick={handleStartNewChat} variant="contained">开始对话</Button>
+          <Button onClick={() => setNewChatDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleStartNewChat} variant="contained">
+            Open thread
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

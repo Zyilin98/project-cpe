@@ -1,52 +1,69 @@
-/*
- * @Author: 1orz cloudorzi@gmail.com
- * @Date: 2025-12-10 09:19:05
- * @LastEditors: 1orz cloudorzi@gmail.com
- * @LastEditTime: 2025-12-13 12:44:57
- * @FilePath: /udx710-backend/frontend/src/pages/OtaUpdate.tsx
- * @Description: 
- * 
- * Copyright (c) 2025 by 1orz, All Rights Reserved. 
- */
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-  CircularProgress,
   Alert,
-  AlertTitle,
+  Box,
+  Button,
   Chip,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
-  Paper,
-  LinearProgress,
+  CircularProgress,
   Dialog,
-  DialogTitle,
+  DialogActions,
   DialogContent,
   DialogContentText,
-  DialogActions,
-  Divider,
+  DialogTitle,
+  LinearProgress,
+  Paper,
+  Snackbar,
+  Typography,
 } from '@mui/material'
+import Grid from '@mui/material/Grid'
 import {
-  CloudUpload,
-  CheckCircle,
-  Error as ErrorIcon,
-  Warning,
-  Info,
-  Refresh,
-  SystemUpdateAlt,
   Cancel,
+  CheckCircle,
+  CloudUpload,
+  Error as ErrorIcon,
+  Refresh,
   RestartAlt,
+  SystemUpdateAlt,
+  Warning,
 } from '@mui/icons-material'
 import { api } from '../api'
+import ErrorSnackbar from '../components/ErrorSnackbar'
+import PageHero from '../components/PageHero'
 import type { OtaStatusResponse, OtaUploadResponse } from '../api/types'
+import { alpha } from '../utils/theme'
+
+type ConfirmDialogState = 'apply' | 'cancel' | null
+
+function MetaRow({ label, value, monospace = false }: { label: string; value: string; monospace?: boolean }) {
+  return (
+    <Box display="flex" justifyContent="space-between" gap={2} py={1.25} borderBottom={1} borderColor="divider">
+      <Typography variant="body2" color="text.secondary">
+        {label}
+      </Typography>
+      <Typography
+        variant="body2"
+        fontWeight={600}
+        sx={{
+          fontFamily: monospace ? 'monospace' : 'inherit',
+          textAlign: 'right',
+          wordBreak: 'break-all',
+        }}
+      >
+        {value}
+      </Typography>
+    </Box>
+  )
+}
+
+function ValidationChip({
+  label,
+  ok,
+}: {
+  label: string
+  ok: boolean
+}) {
+  return <Chip label={label} color={ok ? 'success' : 'error'} size="small" variant={ok ? 'filled' : 'outlined'} />
+}
 
 export default function OtaUpdate() {
   const [loading, setLoading] = useState(true)
@@ -54,18 +71,17 @@ export default function OtaUpdate() {
   const [applying, setApplying] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  
   const [status, setStatus] = useState<OtaStatusResponse | null>(null)
   const [uploadResult, setUploadResult] = useState<OtaUploadResponse | null>(null)
-  const [confirmDialog, setConfirmDialog] = useState<'apply' | 'cancel' | null>(null)
-  
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>(null)
+
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const loadStatus = useCallback(async () => {
     try {
-      const res = await api.getOtaStatus()
-      if (res.data) {
-        setStatus(res.data)
+      const response = await api.getOtaStatus()
+      if (response.data) {
+        setStatus(response.data)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -78,16 +94,14 @@ export default function OtaUpdate() {
     void loadStatus()
   }, [loadStatus])
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
-    // 验证文件类型（支持 tar.gz 和 zip 格式）
     const validExtensions = ['.tar.gz', '.tgz', '.zip']
-    const isValid = validExtensions.some(ext => file.name.endsWith(ext))
-    
+    const isValid = validExtensions.some((extension) => file.name.endsWith(extension))
     if (!isValid) {
-      setError('请上传 .tar.gz 或 .zip 格式的 OTA 更新包')
+      setError('Please upload an OTA archive in .tar.gz, .tgz or .zip format.')
       return
     }
 
@@ -97,23 +111,22 @@ export default function OtaUpdate() {
     setUploadResult(null)
 
     try {
-      const res = await api.uploadOta(file)
-      if (res.status === 'ok' && res.data) {
-        setUploadResult(res.data)
-        if (res.data.validation.valid) {
-          setSuccess('OTA 包上传成功，验证通过')
+      const response = await api.uploadOta(file)
+      if (response.status === 'ok' && response.data) {
+        setUploadResult(response.data)
+        if (response.data.validation.valid) {
+          setSuccess('OTA package uploaded and validated successfully.')
         } else {
-          setError('OTA 包验证失败：' + (res.data.validation.error || '未知错误'))
+          setError(`OTA validation failed: ${response.data.validation.error || 'Unknown validation error.'}`)
         }
         await loadStatus()
       } else {
-        setError(res.message || '上传失败')
+        setError(response.message || 'Failed to upload the OTA package.')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
       setUploading(false)
-      // 清空文件选择
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
@@ -127,16 +140,17 @@ export default function OtaUpdate() {
     setSuccess(null)
 
     try {
-      const res = await api.applyOta(restartNow)
-      if (res.status === 'ok') {
-        setSuccess(restartNow 
-          ? '更新已应用，系统即将重启...' 
-          : '更新已应用，请手动重启服务生效'
+      const response = await api.applyOta(restartNow)
+      if (response.status === 'ok') {
+        setSuccess(
+          restartNow
+            ? 'Update applied. The device will restart now.'
+            : 'Update applied. Restart the service or device later to fully activate it.',
         )
         setUploadResult(null)
         await loadStatus()
       } else {
-        setError(res.message || '应用更新失败')
+        setError(response.message || 'Failed to apply the update.')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -151,13 +165,13 @@ export default function OtaUpdate() {
     setSuccess(null)
 
     try {
-      const res = await api.cancelOta()
-      if (res.status === 'ok') {
-        setSuccess('已取消待安装的更新')
+      const response = await api.cancelOta()
+      if (response.status === 'ok') {
+        setSuccess('Pending OTA update removed.')
         setUploadResult(null)
         await loadStatus()
       } else {
-        setError(res.message || '取消失败')
+        setError(response.message || 'Failed to cancel the pending update.')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -174,138 +188,59 @@ export default function OtaUpdate() {
 
   return (
     <Box>
-      {/* 页面标题 */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box>
-          <Typography variant="h4" gutterBottom fontWeight={600}>
-            OTA 更新
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            上传并安装系统更新包
-          </Typography>
-        </Box>
-        <Button
-          variant="outlined"
-          startIcon={<Refresh />}
-          onClick={() => void loadStatus()}
-          disabled={loading}
-        >
-          刷新状态
-        </Button>
-      </Box>
+      <PageHero
+        eyebrow="Release workspace"
+        title="OTA Update"
+        description="Upload release bundles, validate package integrity and promote a pending build to the running device when you are ready."
+        chips={[
+          status?.current_version ? `Current ${status.current_version}` : 'No current version',
+          status?.pending_update ? 'Pending update present' : 'No pending update',
+          uploadResult?.validation.valid ? 'Latest upload validated' : 'Awaiting package',
+        ]}
+        actions={
+          <Button variant="outlined" startIcon={<Refresh />} onClick={() => void loadStatus()}>
+            Refresh status
+          </Button>
+        }
+      />
 
-      {/* 错误/成功提示 */}
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-          {error}
-        </Alert>
-      )}
-      {success && (
-        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>
+      <ErrorSnackbar error={error} onClose={() => setError(null)} />
+      <Snackbar open={!!success} autoHideDuration={3000} onClose={() => setSuccess(null)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+        <Alert severity="success" variant="filled" onClose={() => setSuccess(null)}>
           {success}
         </Alert>
-      )}
+      </Snackbar>
 
-      <Stack spacing={3}>
-        {/* 当前版本信息 */}
-        <Card>
-          <CardContent>
-            <Box display="flex" alignItems="center" gap={1} mb={2}>
-              <Info color="primary" />
-              <Typography variant="h6">当前版本</Typography>
-            </Box>
-            <TableContainer>
-              <Table size="small">
-                <TableBody>
-                  <TableRow>
-                    <TableCell component="th" sx={{ width: 150 }}>版本号</TableCell>
-                    <TableCell>
-                      <Chip label={status?.current_version || 'N/A'} color="primary" size="small" />
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell component="th">Commit</TableCell>
-                    <TableCell sx={{ fontFamily: 'monospace' }}>
-                      {status?.current_commit || 'N/A'}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </CardContent>
-        </Card>
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <Paper sx={{ p: 3, borderRadius: 5, mb: 3 }}>
+            <Typography variant="h6" fontWeight={700} gutterBottom>
+              Current release
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              This is the build currently running on the device.
+            </Typography>
+            <MetaRow label="Version" value={status?.current_version || 'N/A'} />
+            <MetaRow label="Commit" value={status?.current_commit || 'N/A'} monospace />
+          </Paper>
 
-        {/* 待安装更新 */}
-        {status?.pending_update && status.pending_meta && (
-          <Card sx={{ borderColor: 'warning.main', borderWidth: 2, borderStyle: 'solid' }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={1} mb={2}>
-                <Warning color="warning" />
-                <Typography variant="h6">待安装更新</Typography>
-                <Chip 
-                  label={status.pending_meta.version} 
-                  color="warning" 
-                  size="small" 
-                  sx={{ ml: 1 }}
-                />
-              </Box>
-              <TableContainer>
-                <Table size="small">
-                  <TableBody>
-                    <TableRow>
-                      <TableCell component="th" sx={{ width: 150 }}>版本号</TableCell>
-                      <TableCell>{status.pending_meta.version}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell component="th">Commit</TableCell>
-                      <TableCell sx={{ fontFamily: 'monospace' }}>{status.pending_meta.commit}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell component="th">构建时间</TableCell>
-                      <TableCell>{status.pending_meta.build_time}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell component="th">架构</TableCell>
-                      <TableCell>{status.pending_meta.arch}</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
-              <Divider sx={{ my: 2 }} />
-              <Stack direction="row" spacing={2}>
-                <Button
-                  variant="contained"
-                  color="success"
-                  startIcon={<SystemUpdateAlt />}
-                  onClick={() => setConfirmDialog('apply')}
-                  disabled={applying}
-                >
-                  {applying ? <CircularProgress size={20} /> : '应用更新'}
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  startIcon={<Cancel />}
-                  onClick={() => setConfirmDialog('cancel')}
-                >
-                  取消更新
-                </Button>
-              </Stack>
-            </CardContent>
-          </Card>
-        )}
+          <Paper
+            sx={(theme) => ({
+              p: 3,
+              borderRadius: 5,
+              border: `1px solid ${alpha(theme.palette.warning.main, 0.35)}`,
+              backgroundColor: alpha(theme.palette.warning.main, theme.palette.mode === 'dark' ? 0.1 : 0.06),
+            })}
+          >
+            <Typography variant="h6" fontWeight={700} gutterBottom>
+              Upload package
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Accepted formats: `.tar.gz`, `.tgz`, `.zip`. The package will be validated before it can be applied.
+            </Typography>
 
-        {/* 上传新版本 */}
-        <Card>
-          <CardContent>
-            <Box display="flex" alignItems="center" gap={1} mb={2}>
-              <CloudUpload color="primary" />
-              <Typography variant="h6">上传更新包</Typography>
-            </Box>
-            
             <Alert severity="info" sx={{ mb: 2 }}>
-              <AlertTitle>OTA 更新包格式</AlertTitle>
-              请上传 <code>.tar.gz</code> 格式的 OTA 更新包. 错误的包会导致系统无法启动.
+              Use a verified OTA bundle built for this device architecture. Invalid archives may upload successfully but still fail validation.
             </Alert>
 
             <input
@@ -313,173 +248,160 @@ export default function OtaUpdate() {
               type="file"
               accept=".gz,.tgz,.zip,application/gzip,application/x-gzip,application/x-tar,application/zip"
               style={{ display: 'none' }}
-              onChange={(e) => void handleFileSelect(e)}
+              onChange={(event) => void handleFileSelect(event)}
             />
-            
+
             <Button
               variant="contained"
+              size="large"
               startIcon={uploading ? <CircularProgress size={20} color="inherit" /> : <CloudUpload />}
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              size="large"
+              fullWidth
             >
-              {uploading ? '上传中...' : '选择更新包'}
+              {uploading ? 'Uploading...' : 'Choose OTA package'}
             </Button>
 
-            {uploading && (
-              <Box sx={{ mt: 2 }}>
-                <LinearProgress />
-              </Box>
-            )}
-          </CardContent>
-        </Card>
+            {uploading && <LinearProgress sx={{ mt: 2, borderRadius: 999 }} />}
+          </Paper>
+        </Grid>
 
-        {/* 上传结果 */}
-        {uploadResult && (
-          <Card>
-            <CardContent>
+        <Grid size={{ xs: 12, lg: 8 }}>
+          {status?.pending_update && status.pending_meta && (
+            <Paper
+              sx={(theme) => ({
+                p: 3,
+                borderRadius: 5,
+                mb: 3,
+                border: `1px solid ${alpha(theme.palette.warning.main, 0.4)}`,
+              })}
+            >
+              <Box display="flex" justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} gap={2} flexWrap="wrap" mb={2}>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Warning color="warning" />
+                  <Typography variant="h6" fontWeight={700}>
+                    Pending update
+                  </Typography>
+                  <Chip label={status.pending_meta.version} color="warning" size="small" />
+                </Box>
+                <Box display="flex" gap={1} flexWrap="wrap">
+                  <Button
+                    variant="contained"
+                    color="success"
+                    startIcon={applying ? <CircularProgress size={20} color="inherit" /> : <SystemUpdateAlt />}
+                    onClick={() => setConfirmDialog('apply')}
+                    disabled={applying}
+                  >
+                    Apply update
+                  </Button>
+                  <Button variant="outlined" color="error" startIcon={<Cancel />} onClick={() => setConfirmDialog('cancel')}>
+                    Cancel update
+                  </Button>
+                </Box>
+              </Box>
+
+              <MetaRow label="Version" value={status.pending_meta.version} />
+              <MetaRow label="Commit" value={status.pending_meta.commit} monospace />
+              <MetaRow label="Build time" value={status.pending_meta.build_time} />
+              <MetaRow label="Architecture" value={status.pending_meta.arch} />
+            </Paper>
+          )}
+
+          {uploadResult && (
+            <Paper sx={{ p: 3, borderRadius: 5 }}>
               <Box display="flex" alignItems="center" gap={1} mb={2}>
-                {uploadResult.validation.valid ? (
-                  <CheckCircle color="success" />
-                ) : (
-                  <ErrorIcon color="error" />
-                )}
-                <Typography variant="h6">
-                  验证结果
+                {uploadResult.validation.valid ? <CheckCircle color="success" /> : <ErrorIcon color="error" />}
+                <Typography variant="h6" fontWeight={700}>
+                  Upload validation
                 </Typography>
-                <Chip 
-                  label={uploadResult.validation.valid ? '通过' : '失败'}
+                <Chip
+                  label={uploadResult.validation.valid ? 'Passed' : 'Failed'}
                   color={uploadResult.validation.valid ? 'success' : 'error'}
                   size="small"
                 />
               </Box>
-              
-              <TableContainer component={Paper} variant="outlined">
-                <Table size="small">
-                  <TableBody>
-                    <TableRow>
-                      <TableCell component="th" sx={{ width: 180 }}>版本号</TableCell>
-                      <TableCell>{uploadResult.meta.version}</TableCell>
-                      <TableCell align="right">
-                        {uploadResult.validation.is_newer ? (
-                          <Chip label="新版本" color="success" size="small" />
-                        ) : (
-                          <Chip label="旧版本或相同" color="warning" size="small" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell component="th">Commit</TableCell>
-                      <TableCell sx={{ fontFamily: 'monospace' }} colSpan={2}>
-                        {uploadResult.meta.commit}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell component="th">构建时间</TableCell>
-                      <TableCell colSpan={2}>{uploadResult.meta.build_time}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell component="th">二进制 MD5</TableCell>
-                      <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
-                        {uploadResult.meta.binary_md5}
-                      </TableCell>
-                      <TableCell align="right">
-                        {uploadResult.validation.binary_md5_match ? (
-                          <CheckCircle color="success" fontSize="small" />
-                        ) : (
-                          <ErrorIcon color="error" fontSize="small" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell component="th">前端 MD5</TableCell>
-                      <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
-                        {uploadResult.meta.frontend_md5}
-                      </TableCell>
-                      <TableCell align="right">
-                        {uploadResult.validation.frontend_md5_match ? (
-                          <CheckCircle color="success" fontSize="small" />
-                        ) : (
-                          <ErrorIcon color="error" fontSize="small" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell component="th">架构</TableCell>
-                      <TableCell>{uploadResult.meta.arch}</TableCell>
-                      <TableCell align="right">
-                        {uploadResult.validation.arch_match ? (
-                          <CheckCircle color="success" fontSize="small" />
-                        ) : (
-                          <ErrorIcon color="error" fontSize="small" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
+
+              <Grid container spacing={2} sx={{ mb: 2 }}>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Paper variant="outlined" sx={{ p: 2, borderRadius: 4 }}>
+                    <MetaRow label="Version" value={uploadResult.meta.version} />
+                    <MetaRow label="Commit" value={uploadResult.meta.commit} monospace />
+                    <MetaRow label="Build time" value={uploadResult.meta.build_time} />
+                    <MetaRow label="Architecture" value={uploadResult.meta.arch} />
+                  </Paper>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Paper variant="outlined" sx={{ p: 2, borderRadius: 4 }}>
+                    <MetaRow label="Binary MD5" value={uploadResult.meta.binary_md5} monospace />
+                    <MetaRow label="Frontend MD5" value={uploadResult.meta.frontend_md5} monospace />
+                  </Paper>
+                </Grid>
+              </Grid>
+
+              <Box display="flex" gap={1} flexWrap="wrap">
+                <ValidationChip label={uploadResult.validation.is_newer ? 'Newer build' : 'Not newer'} ok={uploadResult.validation.is_newer} />
+                <ValidationChip label="Binary hash" ok={uploadResult.validation.binary_md5_match} />
+                <ValidationChip label="Frontend hash" ok={uploadResult.validation.frontend_md5_match} />
+                <ValidationChip label="Architecture" ok={uploadResult.validation.arch_match} />
+              </Box>
 
               {uploadResult.validation.error && (
                 <Alert severity="error" sx={{ mt: 2 }}>
                   {uploadResult.validation.error}
                 </Alert>
               )}
-            </CardContent>
-          </Card>
-        )}
-      </Stack>
+            </Paper>
+          )}
 
-      {/* 确认对话框 - 应用更新 */}
+          {!status?.pending_update && !uploadResult && (
+            <Paper sx={{ p: 4, borderRadius: 5, textAlign: 'center' }}>
+              <SystemUpdateAlt sx={{ fontSize: 48, color: 'text.secondary', mb: 1.5 }} />
+              <Typography variant="h6" gutterBottom>
+                No pending OTA package
+              </Typography>
+              <Typography color="text.secondary">
+                Upload a release bundle to validate it and prepare the next system update.
+              </Typography>
+            </Paper>
+          )}
+        </Grid>
+      </Grid>
+
       <Dialog open={confirmDialog === 'apply'} onClose={() => setConfirmDialog(null)}>
-        <DialogTitle>确认应用更新</DialogTitle>
+        <DialogTitle>Apply OTA update</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            确定要应用此更新吗？更新将替换当前的后端程序和前端文件。
+            Applying the pending update replaces the current backend and frontend bundle on the device.
           </DialogContentText>
           <Alert severity="warning" sx={{ mt: 2 }}>
-            建议在应用更新后重启服务以确保更新完全生效。
+            Restarting immediately is recommended when you want the new release to become active right away.
           </Alert>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmDialog(null)}>取消</Button>
-          <Button 
-            onClick={() => void handleApply(false)} 
-            variant="outlined"
-            color="primary"
-          >
-            仅应用（稍后重启）
+          <Button onClick={() => setConfirmDialog(null)}>Cancel</Button>
+          <Button onClick={() => void handleApply(false)} variant="outlined">
+            Apply only
           </Button>
-          <Button 
-            onClick={() => void handleApply(true)} 
-            variant="contained"
-            color="success"
-            startIcon={<RestartAlt />}
-          >
-            应用并重启
+          <Button onClick={() => void handleApply(true)} variant="contained" color="success" startIcon={<RestartAlt />}>
+            Apply and restart
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* 确认对话框 - 取消更新 */}
       <Dialog open={confirmDialog === 'cancel'} onClose={() => setConfirmDialog(null)}>
-        <DialogTitle>确认取消更新</DialogTitle>
+        <DialogTitle>Discard pending OTA update</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            确定要取消待安装的更新吗？这将删除已上传的更新包。
+            This removes the uploaded package that is waiting to be installed.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmDialog(null)}>返回</Button>
-          <Button 
-            onClick={() => void handleCancel()} 
-            variant="contained"
-            color="error"
-          >
-            确认取消
+          <Button onClick={() => setConfirmDialog(null)}>Back</Button>
+          <Button onClick={() => void handleCancel()} variant="contained" color="error">
+            Discard update
           </Button>
         </DialogActions>
       </Dialog>
     </Box>
   )
 }
-

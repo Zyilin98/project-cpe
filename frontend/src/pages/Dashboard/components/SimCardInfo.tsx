@@ -1,18 +1,9 @@
-/*
- * @Author: 1orz cloudorzi@gmail.com
- * @Date: 2025-12-10 10:18:14
- * @LastEditors: 1orz cloudorzi@gmail.com
- * @LastEditTime: 2025-12-13 12:44:30
- * @FilePath: /udx710-backend/frontend/src/pages/Dashboard/components/SimCardInfo.tsx
- * @Description: 
- * 
- * Copyright (c) 2025 by 1orz, All Rights Reserved. 
- */
 import { useState } from 'react'
-import { Box, Card, CardContent, Typography, Stack, Chip, IconButton, Tooltip } from '@mui/material'
-import { SimCard, Visibility, VisibilityOff, Phone, Sms, Language } from '@mui/icons-material'
+import { Box, Chip, IconButton, Stack, Tooltip, Typography } from '@mui/material'
+import { Language, Phone, SimCard, Sms, Visibility, VisibilityOff } from '@mui/icons-material'
 import { getSensitiveStyle } from '../utils'
 import type { SimInfo } from '@/api/types'
+import { DashboardPanel } from './DashboardPanel'
 
 interface SimCardInfoProps {
   simInfo: SimInfo | null
@@ -21,83 +12,92 @@ interface SimCardInfoProps {
 export function SimCardInfo({ simInfo }: SimCardInfoProps) {
   const [showInfo, setShowInfo] = useState(false)
 
+  const rows = [
+    { label: 'ICCID', value: simInfo?.iccid || 'N/A', sensitive: true },
+    { label: 'IMSI', value: simInfo?.imsi || 'N/A', sensitive: true },
+    { label: 'MCC/MNC', value: `${simInfo?.mcc || '?'}/${simInfo?.mnc || '?'}` },
+    { label: 'Phone', value: simInfo?.phone_numbers?.[0] || 'N/A', sensitive: true, icon: <Phone fontSize="small" color="action" /> },
+    { label: 'SMSC', value: simInfo?.sms_center || 'N/A', sensitive: true, icon: <Sms fontSize="small" color="action" /> },
+  ]
+
   return (
-    <Card sx={{ height: '100%' }}>
-      <CardContent>
-        <Box display="flex" alignItems="center" gap={1} mb={2}>
-          <SimCard color="primary" />
-          <Typography variant="subtitle2" color="text.secondary">SIM 卡信息</Typography>
+    <DashboardPanel
+      title="SIM Profile"
+      subtitle="Identity, language and line metadata"
+      icon={<SimCard color="primary" />}
+      action={(
+        <Box display="flex" alignItems="center" gap={0.75}>
           <Chip
-            label={simInfo?.present ? '已插入' : '未插入'}
+            label={simInfo?.present ? 'Ready' : 'Missing'}
             color={simInfo?.present ? 'success' : 'error'}
-            size="small"
             variant="outlined"
-            sx={{ ml: 'auto' }}
+            size="small"
           />
-          <Tooltip title={showInfo ? '隐藏敏感信息' : '显示完整信息'}>
+          <Tooltip title={showInfo ? 'Hide details' : 'Show details'}>
             <IconButton size="small" onClick={() => setShowInfo(!showInfo)}>
               {showInfo ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
             </IconButton>
           </Tooltip>
         </Box>
-        <Stack spacing={1.5}>
-          {/* ICCID */}
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="caption" color="text.secondary">ICCID</Typography>
-            <Typography variant="body2" fontWeight="medium" fontFamily="monospace" sx={getSensitiveStyle(showInfo)}>
-              {simInfo?.iccid || 'N/A'}
-            </Typography>
-          </Box>
-          {/* IMSI */}
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="caption" color="text.secondary">IMSI</Typography>
-            <Typography variant="body2" fontWeight="medium" fontFamily="monospace" sx={getSensitiveStyle(showInfo)}>
-              {simInfo?.imsi || 'N/A'}
-            </Typography>
-          </Box>
-          {/* 手机号码 */}
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Box display="flex" alignItems="center" gap={0.5}>
-              <Phone fontSize="small" color="action" />
-              <Typography variant="caption" color="text.secondary">手机号码</Typography>
+      )}
+    >
+      <Stack spacing={1.1}>
+        {rows.map((row) => (
+          <Box
+            key={row.label}
+            sx={(theme) => ({
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 1,
+              px: 1.25,
+              py: 1,
+              borderRadius: 4,
+              border: `1px solid ${theme.palette.divider}`,
+              backgroundColor: 'background.paper',
+            })}
+          >
+            <Box display="flex" alignItems="center" gap={0.75}>
+              {row.icon}
+              <Typography variant="caption" color="text.secondary">
+                {row.label}
+              </Typography>
             </Box>
-            <Typography variant="body2" fontWeight="medium" fontFamily="monospace" sx={getSensitiveStyle(showInfo)}>
-              {simInfo?.phone_numbers?.length ? simInfo.phone_numbers[0] : 'N/A'}
+            <Typography
+              variant="body2"
+              fontWeight={600}
+              fontFamily="monospace"
+              sx={row.sensitive ? getSensitiveStyle(showInfo) : undefined}
+            >
+              {row.value}
             </Typography>
           </Box>
-          {/* 短信中心 */}
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Box display="flex" alignItems="center" gap={0.5}>
-              <Sms fontSize="small" color="action" />
-              <Typography variant="caption" color="text.secondary">短信中心</Typography>
+        ))}
+
+        {simInfo?.preferred_languages && simInfo.preferred_languages.length > 0 && (
+          <Box
+            sx={(theme) => ({
+              px: 1.25,
+              py: 1.1,
+              borderRadius: 4,
+              border: `1px solid ${theme.palette.divider}`,
+              backgroundColor: 'background.paper',
+            })}
+          >
+            <Box display="flex" alignItems="center" gap={0.75} mb={1}>
+              <Language fontSize="small" color="action" />
+              <Typography variant="caption" color="text.secondary">
+                Languages
+              </Typography>
             </Box>
-            <Typography variant="body2" fontWeight="medium" fontFamily="monospace" sx={getSensitiveStyle(showInfo)}>
-              {simInfo?.sms_center || 'N/A'}
-            </Typography>
+            <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
+              {simInfo.preferred_languages.slice(0, 4).map((lang) => (
+                <Chip key={lang} label={lang.toUpperCase()} size="small" variant="outlined" />
+              ))}
+            </Stack>
           </Box>
-          {/* MCC/MNC */}
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="caption" color="text.secondary">MCC/MNC</Typography>
-            <Typography variant="body2" fontWeight="medium" fontFamily="monospace">
-              {simInfo?.mcc || '?'}/{simInfo?.mnc || '?'}
-            </Typography>
-          </Box>
-          {/* 首选语言 */}
-          {simInfo?.preferred_languages && simInfo.preferred_languages.length > 0 && (
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Box display="flex" alignItems="center" gap={0.5}>
-                <Language fontSize="small" color="action" />
-                <Typography variant="caption" color="text.secondary">语言</Typography>
-              </Box>
-              <Stack direction="row" spacing={0.5}>
-                {simInfo.preferred_languages.slice(0, 3).map((lang, idx) => (
-                  <Chip key={idx} label={lang.toUpperCase()} size="small" variant="outlined" />
-                ))}
-              </Stack>
-            </Box>
-          )}
-        </Stack>
-      </CardContent>
-    </Card>
+        )}
+      </Stack>
+    </DashboardPanel>
   )
 }

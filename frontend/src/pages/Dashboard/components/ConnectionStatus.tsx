@@ -1,16 +1,8 @@
-/*
- * @Author: 1orz cloudorzi@gmail.com
- * @Date: 2025-12-10 10:18:32
- * @LastEditors: 1orz cloudorzi@gmail.com
- * @LastEditTime: 2025-12-13 12:44:16
- * @FilePath: /udx710-backend/frontend/src/pages/Dashboard/components/ConnectionStatus.tsx
- * @Description: 
- * 
- * Copyright (c) 2025 by 1orz, All Rights Reserved. 
- */
-import { Box, Card, CardContent, Typography, Stack } from '@mui/material'
+import { Box, Chip, Stack, Typography } from '@mui/material'
+import { Router, Wifi } from '@mui/icons-material'
 import type { QosInfo } from '@/api/types'
 import type { ConnectivityResult } from '../hooks/useDashboardData'
+import { DashboardPanel } from './DashboardPanel'
 
 interface ConnectionStatusProps {
   qosInfo: QosInfo | null
@@ -18,48 +10,77 @@ interface ConnectionStatusProps {
 }
 
 export function ConnectionStatus({ qosInfo, connectivity }: ConnectionStatusProps) {
+  const metrics = [
+    {
+      label: 'QCI',
+      value: qosInfo?.qci || '-',
+    },
+    {
+      label: 'Downlink',
+      value: qosInfo?.dl_speed ? `${(qosInfo.dl_speed / 1000).toFixed(0)} Mbps` : '-',
+    },
+    {
+      label: 'Uplink',
+      value: qosInfo?.ul_speed ? `${(qosInfo.ul_speed / 1000).toFixed(0)} Mbps` : '-',
+    },
+  ]
+
   return (
-    <Card sx={{ height: '100%' }}>
-      <CardContent>
-        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-          连接状态
-        </Typography>
-        <Stack spacing={1}>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="caption" color="text.secondary">QCI</Typography>
-            <Typography variant="body2" fontWeight="medium">{qosInfo?.qci || '-'}</Typography>
-          </Box>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="caption" color="text.secondary">下行</Typography>
-            <Typography variant="body2" fontWeight="medium">
-              {qosInfo?.dl_speed ? `${(qosInfo.dl_speed / 1000).toFixed(0)} Mbps` : '-'}
-            </Typography>
-          </Box>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="caption" color="text.secondary">上行</Typography>
-            <Typography variant="body2" fontWeight="medium">
-              {qosInfo?.ul_speed ? `${(qosInfo.ul_speed / 1000).toFixed(0)} Mbps` : '-'}
-            </Typography>
-          </Box>
-          {/* 联网检测 */}
-          <Box display="flex" justifyContent="space-between" alignItems="center" pt={0.5} borderTop={1} borderColor="divider">
-            <Box display="flex" alignItems="center" gap={0.5}>
-              <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: connectivity?.ipv4?.success ? 'success.main' : 'error.main' }} />
-              <Typography variant="caption" color="text.secondary">IPv4</Typography>
-              <Typography variant="caption" fontWeight="medium" color={connectivity?.ipv4?.success ? 'success.main' : 'error.main'}>
-                {connectivity?.ipv4?.success ? `${connectivity.ipv4.latency_ms?.toFixed(0)}ms` : 'x'}
+    <DashboardPanel
+      title="Connection Status"
+      subtitle="QoS class and internet reachability"
+      icon={<Router color="primary" />}
+    >
+      <Stack spacing={1.5}>
+        <Box display="grid" gridTemplateColumns="repeat(3, minmax(0, 1fr))" gap={1}>
+          {metrics.map((metric) => (
+            <Box
+              key={metric.label}
+              sx={(theme) => ({
+                p: 1.25,
+                borderRadius: 4,
+                backgroundColor: 'background.paper',
+                border: `1px solid ${theme.palette.divider}`,
+              })}
+            >
+              <Typography variant="caption" color="text.secondary">
+                {metric.label}
+              </Typography>
+              <Typography variant="body2" fontWeight={700} sx={{ mt: 0.5 }}>
+                {metric.value}
               </Typography>
             </Box>
-            <Box display="flex" alignItems="center" gap={0.5}>
-              <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: connectivity?.ipv6?.success ? 'success.main' : 'error.main' }} />
-              <Typography variant="caption" color="text.secondary">IPv6</Typography>
-              <Typography variant="caption" fontWeight="medium" color={connectivity?.ipv6?.success ? 'success.main' : 'error.main'}>
-                {connectivity?.ipv6?.success ? `${connectivity.ipv6.latency_ms?.toFixed(0)}ms` : 'x'}
-              </Typography>
-            </Box>
+          ))}
+        </Box>
+
+        <Box
+          sx={(theme) => ({
+            p: 1.5,
+            borderRadius: 4,
+            border: `1px solid ${theme.palette.divider}`,
+            backgroundColor: 'background.paper',
+          })}
+        >
+          <Box display="flex" alignItems="center" gap={1} mb={1}>
+            <Wifi color="primary" fontSize="small" />
+            <Typography variant="body2" fontWeight={600}>
+              Reachability
+            </Typography>
           </Box>
-        </Stack>
-      </CardContent>
-    </Card>
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+            <Chip
+              label={connectivity?.ipv4?.success ? `IPv4 ${connectivity.ipv4.latency_ms?.toFixed(0)}ms` : 'IPv4 offline'}
+              color={connectivity?.ipv4?.success ? 'success' : 'error'}
+              variant="outlined"
+            />
+            <Chip
+              label={connectivity?.ipv6?.success ? `IPv6 ${connectivity.ipv6.latency_ms?.toFixed(0)}ms` : 'IPv6 offline'}
+              color={connectivity?.ipv6?.success ? 'success' : 'error'}
+              variant="outlined"
+            />
+          </Stack>
+        </Box>
+      </Stack>
+    </DashboardPanel>
   )
 }
