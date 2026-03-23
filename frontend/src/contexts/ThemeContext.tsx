@@ -261,12 +261,16 @@ function createAppTheme(mode: ThemeMode) {
             padding: 8,
           },
           switchBase: {
+            '&.Mui-checked': {
+              color: '#fff',
+            },
             '&.Mui-checked + .MuiSwitch-track': {
               opacity: 1,
             },
           },
           thumb: {
             boxShadow: 'none',
+            backgroundColor: '#fff',
           },
           track: {
             borderRadius: 999,
