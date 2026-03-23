@@ -1,5 +1,5 @@
 import { useState, type SyntheticEvent } from 'react'
-import { Alert, autocompleteClasses, Box, CircularProgress, Paper, Snackbar, Tab, Tabs } from '@mui/material'
+import { Alert, Box, CircularProgress, Paper, Snackbar, Tab, Tabs } from '@mui/material'
 import { Business, CellTower, Router, SimCard } from '@mui/icons-material'
 import ErrorSnackbar from '../components/ErrorSnackbar'
 import PageHero from '../components/PageHero'
