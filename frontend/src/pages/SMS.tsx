@@ -580,7 +580,7 @@ export default function SMSPage() {
       />
 
       <ErrorSnackbar error={error} onClose={() => setError(null)} />
-      <Snackbar open={!!success} autoHideDuration={3000} onClose={() => setSuccess(null)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+      <Snackbar open={!!success} autoHideDuration={3000} onClose={() => setSuccess(null)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }} sx={{ mt: 14 }}>
         <Alert severity="success" onClose={() => setSuccess(null)} variant="filled">
           {success}
         </Alert>

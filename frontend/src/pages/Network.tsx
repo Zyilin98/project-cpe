@@ -1,5 +1,5 @@
 import { useState, type SyntheticEvent } from 'react'
-import { Alert, Box, CircularProgress, Paper, Snackbar, Tab, Tabs } from '@mui/material'
+import { Alert, autocompleteClasses, Box, CircularProgress, Paper, Snackbar, Tab, Tabs } from '@mui/material'
 import { Business, CellTower, Router, SimCard } from '@mui/icons-material'
 import ErrorSnackbar from '../components/ErrorSnackbar'
 import PageHero from '../components/PageHero'
@@ -112,7 +112,7 @@ export default function NetworkPage() {
       }}
     >
       <ErrorSnackbar error={error} onClose={clearError} />
-      <Snackbar open={!!success} autoHideDuration={3000} onClose={clearSuccess} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+      <Snackbar open={!!success} autoHideDuration={3000} onClose={clearSuccess} anchorOrigin={{ vertical: 'top', horizontal: 'center' }} sx={{ mt: 14 }}>
         <Alert severity="success" variant="filled" onClose={clearSuccess}>{success}</Alert>
       </Snackbar>
 
@@ -135,13 +135,13 @@ export default function NetworkPage() {
           border: `1px solid ${theme.palette.divider}`,
           backgroundColor: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.78 : 0.88),
           '& .MuiTabs-indicator': {
-            height: 32,
+            height: 'calc(100% - 0px)',
             borderRadius: 4,
             backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.3 : 0.16),
             zIndex: 0,
           },
           '& .MuiTab-root': {
-            minHeight: 48,
+            minHeight: 32,
             borderRadius: 4,
             textTransform: 'none',
             fontWeight: 600,

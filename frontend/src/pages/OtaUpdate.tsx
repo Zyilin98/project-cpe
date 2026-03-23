@@ -213,7 +213,7 @@ export default function OtaUpdate() {
       />
 
       <ErrorSnackbar error={error} onClose={() => setError(null)} />
-      <Snackbar open={!!success} autoHideDuration={3000} onClose={() => setSuccess(null)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+      <Snackbar open={!!success} autoHideDuration={3000} onClose={() => setSuccess(null)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }} sx={{ mt: 14 }}>
         <Alert severity="success" variant="filled" onClose={() => setSuccess(null)}>
           {success}
         </Alert>

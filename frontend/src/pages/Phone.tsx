@@ -425,7 +425,7 @@ export default function PhonePage() {
       />
 
       <ErrorSnackbar error={error} onClose={() => setError(null)} />
-      <Snackbar open={!!success} autoHideDuration={3000} onClose={() => setSuccess(null)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+      <Snackbar open={!!success} autoHideDuration={3000} onClose={() => setSuccess(null)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }} sx={{ mt: 14 }}>
         <Alert severity="success" onClose={() => setSuccess(null)} variant="filled">
           {success}
         </Alert>
@@ -489,7 +489,7 @@ export default function PhonePage() {
           border: `1px solid ${theme.palette.divider}`,
           backgroundColor: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.78 : 0.88),
           '& .MuiTabs-indicator': {
-            height: 32,
+            height: 48,
             borderRadius: 16,
             backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.3 : 0.16),
             zIndex: 0,
