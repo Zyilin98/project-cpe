@@ -129,18 +129,25 @@ export default function useNetworkPageController({
 
       if (apnRes.data?.contexts) {
         setApnContexts(apnRes.data.contexts)
-        if (!apnInitialized) {
-          const activeContext = apnRes.data.contexts.find((context) => context.apn) || apnRes.data.contexts[0]
-          if (activeContext) {
-            setSelectedContext(activeContext.path)
-            setApnForm({
-              apn: activeContext.apn,
-              protocol: activeContext.protocol,
-              username: activeContext.username,
-              password: activeContext.password,
-              auth_method: activeContext.auth_method,
-            })
-          }
+        const preferredContext =
+          apnRes.data.contexts.find((context) => context.active) ||
+          apnRes.data.contexts.find((context) => context.apn) ||
+          apnRes.data.contexts[0]
+        const currentContext = apnRes.data.contexts.find((context) => context.path === selectedContext)
+        const shouldSyncContext =
+          !apnInitialized ||
+          !currentContext ||
+          (!currentContext.active && !currentContext.apn && !!preferredContext && preferredContext.path !== currentContext.path)
+
+        if (preferredContext && shouldSyncContext) {
+          setSelectedContext(preferredContext.path)
+          setApnForm({
+            apn: preferredContext.apn,
+            protocol: preferredContext.protocol,
+            username: preferredContext.username,
+            password: preferredContext.password,
+            auth_method: preferredContext.auth_method,
+          })
           setApnInitialized(true)
         }
       }
