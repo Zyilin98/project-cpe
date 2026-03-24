@@ -54,7 +54,7 @@ export const messageCatalog = {
       },
       pages: {
         dashboard: { title: '仪表盘', subtitle: '实时无线与系统遥测' },
-        device: { title: '设备', subtitle: '硬件状态与 SIM 档案' },
+        device: { title: '设备', subtitle: '硬件状态与 SIM 状态' },
         network: { title: '网络', subtitle: '无线、运营商与 APN 控制' },
         phone: { title: '电话', subtitle: '通话处理与语音控制' },
         sms: { title: '短信', subtitle: '消息时间线与发送流程' },
@@ -80,7 +80,7 @@ export const messageCatalog = {
       page: {
         eyebrow: '实时总览',
         title: '仪表盘',
-        description: '当前调制解调器会话的运营商状态、系统负载和实时流量。',
+        description: '调制解调器会话的运营商状态、系统负载和实时流量。',
       },
       status: {
         eyebrow: '调制解调器状态',
@@ -125,7 +125,7 @@ export const messageCatalog = {
         latency: '{version} {value}ms',
       },
       sim: {
-        title: 'SIM 档案',
+        title: 'SIM 状态',
         subtitle: '状态、语言和线路元数据',
         ready: '就绪',
         missing: '缺失',
@@ -163,7 +163,7 @@ export const messageCatalog = {
         title: '温度监控',
         subtitle: '设备各传感器温度快照',
         average: '平均 {value}°C',
-        value: '{value}°',
+        value: '{value}°C',
         noSensors: '后端没有上报温度传感器。',
       },
       cells: {
@@ -679,7 +679,7 @@ export const messageCatalog = {
       sections: {
         status: '设备状态',
         identity: '设备标识',
-        simProfile: 'SIM 档案',
+        simProfile: 'SIM 状态',
         simSlot: 'SIM 卡槽',
       },
       fields: {
@@ -952,8 +952,8 @@ export const messageCatalog = {
       thermal: {
         title: 'Thermal Monitor',
         subtitle: 'Sensor snapshots across the device',
-        average: 'Avg {value} deg C',
-        value: '{value} deg',
+        average: 'Avg {value} °C',
+        value: '{value} °C',
         noSensors: 'No temperature sensors reported by the backend.',
       },
       cells: {

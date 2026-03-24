@@ -125,7 +125,7 @@ export function SystemResources({ systemStats }: SystemResourcesProps) {
         <Box display="flex" alignItems="center" justifyContent="space-between" gap={1} flexWrap="wrap">
           <Chip
             icon={<Thermostat />}
-            label={mainTemp !== null ? `${mainTemp.toFixed(0)} deg C` : t('dashboard.resources.noTemp')}
+            label={mainTemp !== null ? `${mainTemp.toFixed(0)} °C` : t('dashboard.resources.noTemp')}
             color={mainTemp !== null ? getTempColor(mainTemp) : 'default'}
           />
           <Chip
