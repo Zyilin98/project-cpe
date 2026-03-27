@@ -759,7 +759,7 @@ export const messageCatalog = {
         err: '错误',
       },
       imei: {
-        toggle: 'IMEI 面板',
+        toggle: 'IMEI 设置',
         warning: 'IMEI 必须是 15 位数字。',
         write: '写入',
         read: '读取',
@@ -1549,7 +1549,7 @@ export const messageCatalog = {
         err: 'ERR',
       },
       imei: {
-        toggle: 'IMEI panel',
+        toggle: 'IMEI setting',
         warning: 'IMEI must be a 15-digit number.',
         write: 'Write',
         read: 'Read',
