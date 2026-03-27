@@ -663,12 +663,18 @@ pub async fn get_usb_mode() -> impl IntoResponse {
     // 读取 USB 模式配置（包括硬件状态和配置文件）
     match usb_switch::get_usb_mode_config() {
         Ok(config) => {
+            // 计算是否需要重启：当配置文件中的模式与当前硬件运行的模式不一致时
+            let needs_reboot = match (config.current_mode, config.temporary_mode.or(config.permanent_mode)) {
+                (Some(current), Some(configured)) => current != configured,
+                _ => false, // 如果任一值为 None，则不需要重启
+            };
+            
             let response = UsbModeResponse {
                 current_mode: config.current_mode,
                 current_mode_name: get_mode_name(config.current_mode),
                 permanent_mode: config.permanent_mode,
                 temporary_mode: config.temporary_mode,
-                needs_reboot: true, // 始终需要重启
+                needs_reboot,
                 read_mode: "hardware".to_string(),
             };
             (
