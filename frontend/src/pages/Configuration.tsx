@@ -92,7 +92,7 @@ export default function ConfigurationPage() {
           borderRadius: 6,
         },
         '& .MuiAccordion-root': {
-          borderRadius: 6,
+          borderRadius: '24px !important',
           overflow: 'hidden',
           border: 1,
           borderColor: 'divider',
@@ -121,6 +121,7 @@ export default function ConfigurationPage() {
           autoHideDuration={3000}
           onClose={clearSuccess}
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          sx={{ mt: 14 }}
         >
           <Alert severity="success" variant="filled" onClose={clearSuccess}>
             {success}
