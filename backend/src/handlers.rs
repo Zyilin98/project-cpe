@@ -2800,3 +2800,396 @@ pub async fn cancel_ota_handler() -> impl IntoResponse {
     }
 }
 
+// ============ 定时重启 API ============
+
+use crate::models::{ScheduledRebootRequest, ScheduledRebootResponse};
+
+/// GET /api/system/scheduled-reboot - 获取定时重启配置
+pub async fn get_scheduled_reboot_handler(
+    State(config_manager): State<Arc<ConfigManager>>,
+) -> (StatusCode, Json<ApiResponse<ScheduledRebootResponse>>) {
+    let config = config_manager.get_scheduled_reboot();
+    
+    let next_reboot = if config.enabled {
+        match config.mode.as_str() {
+            "interval" => {
+                config.interval_hours.map(|h| format!("每 {} 小时重启一次", h))
+            },
+            _ => {
+                Some(format!("每天 {} 重启", config.daily_time))
+            }
+        }
+    } else {
+        None
+    };
+    
+    let response = ScheduledRebootResponse {
+        enabled: config.enabled,
+        mode: config.mode,
+        daily_time: config.daily_time,
+        interval_hours: config.interval_hours,
+        next_reboot,
+    };
+    
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success_with_message("Success", response)),
+    )
+}
+
+/// POST /api/system/scheduled-reboot - 设置定时重启配置
+pub async fn set_scheduled_reboot_handler(
+    State(config_manager): State<Arc<ConfigManager>>,
+    Json(payload): Json<ScheduledRebootRequest>,
+) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
+    // 验证参数
+    if payload.enabled {
+        match payload.mode.as_str() {
+            "daily" => {
+                // 验证时间格式 HH:MM
+                let parts: Vec<&str> = payload.daily_time.split(':').collect();
+                if parts.len() != 2 {
+                    return (
+                        StatusCode::OK,
+                        Json(ApiResponse::error("时间格式错误，请使用 HH:MM 格式")),
+                    );
+                }
+                let hour = parts[0].parse::<u32>().unwrap_or(99);
+                let minute = parts[1].parse::<u32>().unwrap_or(99);
+                if hour > 23 || minute > 59 {
+                    return (
+                        StatusCode::OK,
+                        Json(ApiResponse::error("时间格式错误，小时 0-23，分钟 0-59")),
+                    );
+                }
+            },
+            "interval" => {
+                if payload.interval_hours.is_none() || payload.interval_hours == Some(0) {
+                    return (
+                        StatusCode::OK,
+                        Json(ApiResponse::error("间隔小时数必须大于 0")),
+                    );
+                }
+            },
+            _ => {
+                return (
+                    StatusCode::OK,
+                    Json(ApiResponse::error("无效的重启模式，请使用 daily 或 interval")),
+                );
+            }
+        }
+    }
+    
+    let new_config = crate::config::ScheduledRebootConfig {
+        enabled: payload.enabled,
+        mode: payload.mode.clone(),
+        daily_time: payload.daily_time.clone(),
+        interval_hours: payload.interval_hours,
+    };
+    
+    match config_manager.set_scheduled_reboot(new_config) {
+        Ok(_) => {
+            let message = if payload.enabled {
+                match payload.mode.as_str() {
+                    "interval" => format!("定时重启已启用：每 {} 小时重启一次", payload.interval_hours.unwrap_or(0)),
+                    _ => format!("定时重启已启用：每天 {} 重启", payload.daily_time),
+                }
+            } else {
+                "定时重启已禁用".to_string()
+            };
+            (
+                StatusCode::OK,
+                Json(ApiResponse::success_with_message(message, json!({}))),
+            )
+        },
+        Err(e) => (
+            StatusCode::OK,
+            Json(ApiResponse::error(format!("保存定时重启配置失败: {}", e))),
+        ),
+    }
+}
+
+// ============ ADB TCP 状态 API ============
+
+use crate::models::AdbTcpStatusResponse;
+
+/// GET /api/adb-tcp - 获取 ADB TCP 状态
+pub async fn get_adb_tcp_status_handler() -> impl IntoResponse {
+    let result = tokio::task::spawn_blocking(|| {
+        // 检查端口 5555 是否在监听
+        let listening = check_port_listening(5555);
+        
+        // 获取设备 IP 地址用于提示
+        let ip = get_device_ip().unwrap_or_else(|| "192.168.66.1".to_string());
+        
+        AdbTcpStatusResponse {
+            listening,
+            port: 5555,
+            connect_hint: format!("adb connect {}:5555", ip),
+        }
+    }).await;
+    
+    match result {
+        Ok(status) => (
+            StatusCode::OK,
+            Json(ApiResponse::success_with_message("Success", status)),
+        ),
+        Err(e) => (
+            StatusCode::OK,
+            Json(ApiResponse::<AdbTcpStatusResponse>::error(format!(
+                "Failed to check ADB TCP status: {}", e
+            ))),
+        ),
+    }
+}
+
+/// 检查指定端口是否在监听
+fn check_port_listening(port: u16) -> bool {
+    // 读取 /proc/net/tcp 和 /proc/net/tcp6 检查端口
+    let port_hex = format!("{:04X}", port);
+    
+    for path in &["/proc/net/tcp", "/proc/net/tcp6"] {
+        if let Ok(content) = std::fs::read_to_string(path) {
+            for line in content.lines().skip(1) {
+                let parts: Vec<&str> = line.split_whitespace().collect();
+                if parts.len() > 1 {
+                    // 格式: local_address (IP:PORT in hex)
+                    if let Some(addr) = parts.get(1) {
+                        if let Some(port_part) = addr.split(':').last() {
+                            if port_part == port_hex {
+                                // 检查状态是否为 LISTEN (0A)
+                                if let Some(state) = parts.get(3) {
+                                    if *state == "0A" {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
+/// 获取设备 IP 地址
+fn get_device_ip() -> Option<String> {
+    // 优先使用 usb0 接口 IP
+    if let Ok(content) = std::fs::read_to_string("/proc/net/fib_trie") {
+        // 简化实现：直接返回 usb0 的默认 IP
+        let _ = content;
+    }
+    // 返回默认 USB 接口 IP
+    Some("192.168.66.1".to_string())
+}
+
+// ============ 文件管理 API ============
+
+use crate::models::{FileInfo, FileListResponse, FileDeleteRequest};
+
+/// 文件上传目录
+const UPLOAD_DIR: &str = "/tmp";
+
+/// GET /api/files/list - 列出已上传文件
+pub async fn list_files_handler() -> impl IntoResponse {
+    let result = tokio::task::spawn_blocking(|| {
+        let mut files = Vec::new();
+        
+        if let Ok(entries) = std::fs::read_dir(UPLOAD_DIR) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_file() {
+                    let name = entry.file_name().to_string_lossy().to_string();
+                    let metadata = entry.metadata().ok();
+                    let size = metadata.as_ref().map(|m| m.len()).unwrap_or(0);
+                    let modified = metadata
+                        .and_then(|m| m.modified().ok())
+                        .map(|t| {
+                            let duration = t.duration_since(std::time::UNIX_EPOCH).unwrap_or_default();
+                            let secs = duration.as_secs();
+                            // 简单的 ISO 8601 格式化
+                            format!("{}", secs)
+                        })
+                        .unwrap_or_else(|| "unknown".to_string());
+                    
+                    files.push(FileInfo {
+                        name,
+                        size,
+                        modified,
+                    });
+                }
+            }
+        }
+        
+        // 按修改时间排序（最新的在前）
+        files.sort_by(|a, b| b.modified.cmp(&a.modified));
+        let total = files.len();
+        
+        FileListResponse {
+            files,
+            total,
+            directory: UPLOAD_DIR.to_string(),
+        }
+    }).await;
+    
+    match result {
+        Ok(data) => (
+            StatusCode::OK,
+            Json(ApiResponse::success_with_message("Success", data)),
+        ),
+        Err(e) => (
+            StatusCode::OK,
+            Json(ApiResponse::<FileListResponse>::error(format!(
+                "Failed to list files: {}", e
+            ))),
+        ),
+    }
+}
+
+/// POST /api/files/upload - 上传文件
+pub async fn upload_file_handler(
+    headers: HeaderMap,
+    body: axum::body::Bytes,
+) -> impl IntoResponse {
+    // 从 Content-Disposition 或自定义 header 获取文件名
+    let filename = headers
+        .get("x-filename")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("uploaded_file")
+        .to_string();
+    
+    // 安全检查：防止路径穿越
+    let safe_name = filename
+        .replace('/', "_")
+        .replace('\\', "_")
+        .replace("..", "_");
+    
+    if safe_name.is_empty() {
+        return (
+            StatusCode::OK,
+            Json(ApiResponse::<serde_json::Value>::error("文件名不能为空")),
+        );
+    }
+    
+    // 检查文件大小（50MB 限制）
+    if body.len() > 50 * 1024 * 1024 {
+        return (
+            StatusCode::OK,
+            Json(ApiResponse::<serde_json::Value>::error("文件大小超过 50MB 限制")),
+        );
+    }
+    
+    let file_path = format!("{}/{}", UPLOAD_DIR, safe_name);
+    
+    match tokio::fs::write(&file_path, &body).await {
+        Ok(_) => (
+            StatusCode::OK,
+            Json(ApiResponse::success_with_message(
+                format!("文件 {} 上传成功 ({} 字节)", safe_name, body.len()),
+                json!({
+                    "filename": safe_name,
+                    "size": body.len(),
+                    "path": file_path,
+                }),
+            )),
+        ),
+        Err(e) => (
+            StatusCode::OK,
+            Json(ApiResponse::<serde_json::Value>::error(format!(
+                "文件写入失败: {}", e
+            ))),
+        ),
+    }
+}
+
+/// POST /api/files/delete - 删除文件
+pub async fn delete_file_handler(
+    Json(payload): Json<FileDeleteRequest>,
+) -> impl IntoResponse {
+    // 安全检查
+    let safe_name = payload.filename
+        .replace('/', "_")
+        .replace('\\', "_")
+        .replace("..", "_");
+    
+    let file_path = format!("{}/{}", UPLOAD_DIR, safe_name);
+    
+    if !std::path::Path::new(&file_path).exists() {
+        return (
+            StatusCode::OK,
+            Json(ApiResponse::<serde_json::Value>::error(format!(
+                "文件 {} 不存在", safe_name
+            ))),
+        );
+    }
+    
+    match tokio::fs::remove_file(&file_path).await {
+        Ok(_) => (
+            StatusCode::OK,
+            Json(ApiResponse::success_with_message(
+                format!("文件 {} 已删除", safe_name),
+                json!({}),
+            )),
+        ),
+        Err(e) => (
+            StatusCode::OK,
+            Json(ApiResponse::<serde_json::Value>::error(format!(
+                "删除文件失败: {}", e
+            ))),
+        ),
+    }
+}
+
+// ============ 定时重启调度器 ============
+
+/// 启动定时重启 watchdog
+/// 每 60 秒检查一次是否需要执行定时重启
+pub async fn scheduled_reboot_watchdog(config_manager: Arc<ConfigManager>) {
+    use std::time::Duration;
+    
+    // 记录上次 interval 重启的时间戳
+    let mut last_interval_reboot = std::time::Instant::now();
+    
+    loop {
+        tokio::time::sleep(Duration::from_secs(60)).await;
+        
+        let config = config_manager.get_scheduled_reboot();
+        if !config.enabled {
+            continue;
+        }
+        
+        match config.mode.as_str() {
+            "daily" => {
+                // 获取当前时间 HH:MM
+                let now = get_current_time_hhmm();
+                if now == config.daily_time {
+                    tracing::info!(time = %config.daily_time, "Scheduled daily reboot triggered");
+                    let _ = Command::new("reboot").output();
+                }
+            },
+            "interval" => {
+                if let Some(hours) = config.interval_hours {
+                    let elapsed = last_interval_reboot.elapsed();
+                    if elapsed >= Duration::from_secs(hours as u64 * 3600) {
+                        tracing::info!(hours = hours, "Scheduled interval reboot triggered");
+                        last_interval_reboot = std::time::Instant::now();
+                        let _ = Command::new("reboot").output();
+                    }
+                }
+            },
+            _ => {},
+        }
+    }
+}
+
+/// 获取当前时间 HH:MM 格式
+fn get_current_time_hhmm() -> String {
+    // 读取 /proc/uptime 配合系统时间不太可靠
+    // 直接使用 date 命令获取
+    if let Ok(output) = Command::new("date").arg("+%H:%M").output() {
+        String::from_utf8_lossy(&output.stdout).trim().to_string()
+    } else {
+        String::new()
+    }
+}

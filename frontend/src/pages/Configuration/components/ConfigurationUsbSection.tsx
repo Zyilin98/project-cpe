@@ -32,9 +32,7 @@ interface ConfigurationUsbSectionProps {
   useHotSwitch: boolean
   onUseHotSwitchChange: (value: boolean) => void
   hotSwitching: boolean
-  rebooting: boolean
   onApply: () => void
-  onReboot: () => void
   getModeNameByValue: (mode: number) => string
 }
 
@@ -49,9 +47,7 @@ export default function ConfigurationUsbSection({
   useHotSwitch,
   onUseHotSwitchChange,
   hotSwitching,
-  rebooting,
   onApply,
-  onReboot,
   getModeNameByValue,
 }: ConfigurationUsbSectionProps) {
   const { t } = useI18n()
@@ -197,17 +193,6 @@ export default function ConfigurationUsbSection({
           >
             {hotSwitching ? t('configuration.usb.switching') : useHotSwitch ? t('configuration.usb.applyHotSwitch') : t('configuration.usb.saveConfig')}
           </Button>
-          {!useHotSwitch && (
-            <Button
-              variant="outlined"
-              color="error"
-              onClick={onReboot}
-              disabled={rebooting}
-              startIcon={rebooting ? <CircularProgress size={20} /> : undefined}
-            >
-              {rebooting ? t('configuration.usb.rebooting') : t('configuration.usb.rebootNow')}
-            </Button>
-          )}
         </Box>
 
         <Alert severity={useHotSwitch ? 'warning' : 'info'} sx={{ mt: 2 }}>

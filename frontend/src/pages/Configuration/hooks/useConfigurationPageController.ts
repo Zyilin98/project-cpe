@@ -2,7 +2,7 @@ import { useEffect, useState, type SyntheticEvent } from 'react'
 import { api } from '../../../api'
 import { DEFAULT_CALL_TEMPLATE, DEFAULT_SMS_TEMPLATE } from '../../../api/types'
 import { useI18n } from '@/contexts/I18nContext'
-import type { AirplaneModeResponse, UsbModeResponse, WebhookConfig } from '../../../api/types'
+import type { AirplaneModeResponse, UsbModeResponse, WebhookConfig, ScheduledRebootConfig, AdbTcpStatus, FileInfo } from '../../../api/types'
 
 export interface HealthStatus {
   status: string
@@ -45,6 +45,19 @@ export default function useConfigurationPageController() {
   const [newHeaderKey, setNewHeaderKey] = useState('')
   const [newHeaderValue, setNewHeaderValue] = useState('')
 
+  // ===== 定时重启 & 系统管理 =====
+  const [scheduledReboot, setScheduledReboot] = useState<ScheduledRebootConfig>({
+    enabled: false,
+    mode: 'daily',
+    daily_time: '04:00',
+  })
+  const [scheduledRebootSaving, setScheduledRebootSaving] = useState(false)
+  const [adbTcpStatus, setAdbTcpStatus] = useState<AdbTcpStatus | null>(null)
+
+  // ===== 文件管理 =====
+  const [files, setFiles] = useState<FileInfo[]>([])
+  const [filesUploading, setFilesUploading] = useState(false)
+
   const checkHealth = async () => {
     setHealthLoading(true)
     try {
@@ -68,11 +81,14 @@ export default function useConfigurationPageController() {
     setError(null)
 
     try {
-      const [dataRes, usbRes, airplaneModeRes, webhookRes] = await Promise.all([
+      const [dataRes, usbRes, airplaneModeRes, webhookRes, adbRes, sysRes, fileRes] = await Promise.all([
         api.getDataStatus(),
         api.getUsbMode(),
         api.getAirplaneMode(),
         api.getWebhookConfig(),
+        api.getAdbTcpStatus().catch(() => ({ data: null })),
+        api.getScheduledReboot().catch(() => ({ data: null })),
+        api.getFileList().catch(() => ({ data: null })),
       ])
 
       if (dataRes.data) {
@@ -90,6 +106,18 @@ export default function useConfigurationPageController() {
 
       if (webhookRes.data) {
         setWebhookConfig(webhookRes.data)
+      }
+
+      if (adbRes.data) {
+        setAdbTcpStatus(adbRes.data)
+      }
+
+      if (sysRes.data) {
+        setScheduledReboot(sysRes.data)
+      }
+
+      if (fileRes.data) {
+        setFiles(fileRes.data.files || [])
       }
 
       await checkHealth()
@@ -304,6 +332,79 @@ export default function useConfigurationPageController() {
     }))
   }
 
+  // ===== 定时重启操作 =====
+  const updateScheduledRebootConfig = (patch: Partial<ScheduledRebootConfig>) => {
+    setScheduledReboot((current) => ({
+      ...current,
+      ...patch,
+    }))
+  }
+
+  const handleSaveScheduledReboot = async () => {
+    setScheduledRebootSaving(true)
+    setError(null)
+    try {
+      const response = await api.setScheduledReboot(scheduledReboot)
+      if (response.status === 'ok') {
+        setSuccess(response.message)
+        // 重新获取以更新状态描述
+        const fresh = await api.getScheduledReboot()
+        if (fresh.data) {
+          setScheduledReboot(fresh.data)
+        }
+      } else {
+        setError(response.message)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setScheduledRebootSaving(false)
+    }
+  }
+
+  // ===== 文件管理操作 =====
+  const loadFiles = async () => {
+    try {
+      const res = await api.getFileList()
+      if (res.data) setFiles(res.data.files || [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }
+
+  const handleUploadFile = async (file: File) => {
+    setFilesUploading(true)
+    setError(null)
+    try {
+      const res = await api.uploadFile(file)
+      if (res.status === 'ok') {
+        setSuccess(res.message)
+        await loadFiles()
+      } else {
+        setError(res.message)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setFilesUploading(false)
+    }
+  }
+
+  const handleDeleteFile = async (filename: string) => {
+    setError(null)
+    try {
+      const res = await api.deleteFile(filename)
+      if (res.status === 'ok') {
+        setSuccess(res.message)
+        await loadFiles()
+      } else {
+        setError(res.message)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }
+
   return {
     loading,
     error,
@@ -345,5 +446,17 @@ export default function useConfigurationPageController() {
     resetWebhookTemplates,
     handleSaveWebhook,
     handleTestWebhook,
+    // 系统管理
+    scheduledReboot,
+    updateScheduledRebootConfig,
+    handleSaveScheduledReboot,
+    scheduledRebootSaving,
+    adbTcpStatus,
+    // 文件管理
+    files,
+    filesUploading,
+    handleUploadFile,
+    handleDeleteFile,
+    loadFiles,
   }
 }

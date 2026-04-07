@@ -702,3 +702,51 @@ export interface OtaApplyRequest {
   restart_now: boolean
 }
 
+// ========== 定时重启类型 ==========
+
+// 定时重启配置
+export interface ScheduledRebootConfig {
+  enabled: boolean
+  mode: string           // "daily" | "interval"
+  daily_time: string     // "HH:MM" 格式
+  interval_hours?: number | null
+  next_reboot?: string   // 下次重启时间描述
+}
+
+// 定时重启设置请求
+export interface ScheduledRebootRequest {
+  enabled: boolean
+  mode: string
+  daily_time: string
+  interval_hours?: number | null
+}
+
+// ========== ADB TCP 类型 ==========
+
+// ADB TCP 状态
+export interface AdbTcpStatus {
+  listening: boolean     // 端口是否在监听
+  port: number          // 监听端口
+  connect_hint: string  // 连接命令提示
+}
+
+// ========== 文件管理类型 ==========
+
+// 文件信息
+export interface FileInfo {
+  name: string
+  size: number
+  modified: string
+}
+
+// 文件列表响应
+export interface FileListResponse {
+  files: FileInfo[]
+  total: number
+  directory: string
+}
+
+// 文件删除请求
+export interface FileDeleteRequest {
+  filename: string
+}

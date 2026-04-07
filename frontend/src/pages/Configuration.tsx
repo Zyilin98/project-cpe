@@ -1,4 +1,5 @@
 import { Alert, Box, CircularProgress, Paper, Snackbar } from '@mui/material'
+import { useEffect } from 'react'
 import { DEFAULT_CALL_TEMPLATE, DEFAULT_SMS_TEMPLATE } from '../api/types'
 import ErrorSnackbar from '../components/ErrorSnackbar'
 import PageHero from '../components/PageHero'
@@ -9,6 +10,8 @@ import ConfigurationDataSection from './Configuration/components/ConfigurationDa
 import ConfigurationOverviewCards from './Configuration/components/ConfigurationOverviewCards'
 import ConfigurationUsbSection from './Configuration/components/ConfigurationUsbSection'
 import ConfigurationWebhookSection from './Configuration/components/ConfigurationWebhookSection'
+import ConfigurationSystemSection from './Configuration/components/ConfigurationSystemSection'
+import ConfigurationFileSection from './Configuration/components/ConfigurationFileSection'
 import useConfigurationPageController from './Configuration/hooks/useConfigurationPageController'
 
 export default function ConfigurationPage() {
@@ -54,7 +57,25 @@ export default function ConfigurationPage() {
     resetWebhookTemplates,
     handleSaveWebhook,
     handleTestWebhook,
+    
+    scheduledReboot,
+    updateScheduledRebootConfig,
+    handleSaveScheduledReboot,
+    scheduledRebootSaving,
+    adbTcpStatus,
+
+    files,
+    filesUploading,
+    handleUploadFile,
+    handleDeleteFile,
+    loadFiles,
   } = useConfigurationPageController()
+
+  // Load files when page is opened
+  useEffect(() => {
+    void loadFiles()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   if (loading) {
     return (
@@ -144,6 +165,28 @@ export default function ConfigurationPage() {
           onToggle={() => void toggleAirplaneMode()}
         />
 
+        <ConfigurationSystemSection
+          expanded={expanded === 'system'}
+          onChange={handleAccordionChange('system')}
+          rebooting={rebooting}
+          onReboot={() => void rebootSystem()}
+          scheduledReboot={scheduledReboot}
+          onScheduledRebootChange={updateScheduledRebootConfig}
+          onSaveScheduledReboot={() => void handleSaveScheduledReboot()}
+          scheduledRebootSaving={scheduledRebootSaving}
+          adbTcpStatus={adbTcpStatus}
+        />
+
+        <ConfigurationFileSection
+          expanded={expanded === 'files'}
+          onChange={handleAccordionChange('files')}
+          files={files}
+          uploading={filesUploading}
+          onUpload={(f) => void handleUploadFile(f)}
+          onDelete={(f) => void handleDeleteFile(f)}
+          onRefresh={() => void loadFiles()}
+        />
+
         <ConfigurationUsbSection
           expanded={expanded === 'usbConfig'}
           onChange={handleAccordionChange('usbConfig')}
@@ -155,9 +198,7 @@ export default function ConfigurationPage() {
           useHotSwitch={useHotSwitch}
           onUseHotSwitchChange={setUseHotSwitch}
           hotSwitching={hotSwitching}
-          rebooting={rebooting}
           onApply={handleUsbModeApply}
-          onReboot={() => void rebootSystem()}
           getModeNameByValue={getModeNameByValue}
         />
 

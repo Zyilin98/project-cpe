@@ -85,9 +85,9 @@ export function StatusOverview({
     },
   ]
 
-  const deviceSummary = [deviceInfo?.manufacturer || t('dashboard.status.unknownDevice'), deviceInfo?.model || '', networkInfo?.operator_name || t('dashboard.status.carrierUnavailable')]
-    .filter(Boolean)
-    .join(' - ')
+  const deviceSummary = networkInfo?.operator_name
+    || formatCarrierName(networkInfo?.mcc, networkInfo?.mnc)
+    || t('dashboard.status.carrierUnavailable')
 
   const operatorSummary = [
     (networkInfo?.mcc && networkInfo?.mnc) ? `${networkInfo.mcc}-${networkInfo.mnc}` : t('dashboard.status.noOperatorCode'),

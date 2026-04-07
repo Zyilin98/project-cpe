@@ -217,6 +217,17 @@ async fn main() -> Result<()> {
         });
     }
 
+    // 启动定时重启 watchdog
+    {
+        let config_clone = Arc::clone(&config_manager);
+        tokio::spawn(async move {
+            // 初始延迟 10 秒，等待系统稳定
+            tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
+            tracing::info!("Scheduled reboot watchdog started");
+            handlers::scheduled_reboot_watchdog(config_clone).await;
+        });
+    }
+
     // CORS 配置：允许前端开发服务器跨域访问
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -296,7 +307,15 @@ async fn main() -> Result<()> {
         .route("/api/stats/cpu", get(get_cpu_info).options(options_handler))
         .route("/api/connectivity", get(get_connectivity_check).options(options_handler))
         .route("/api/system/reboot", post(system_reboot).options(options_handler))
+        .route("/api/system/scheduled-reboot", get(get_scheduled_reboot_handler).post(set_scheduled_reboot_handler).options(options_handler))
         .route("/api/health", get(health_check))
+        // ========== ADB TCP 接口 ==========
+        .route("/api/adb-tcp", get(get_adb_tcp_status_handler).options(options_handler))
+        // ========== 文件管理接口 ==========
+        .route("/api/files/list", get(list_files_handler).options(options_handler))
+        .route("/api/files/upload", post(upload_file_handler).options(options_handler)
+            .layer(DefaultBodyLimit::max(50 * 1024 * 1024))) // 50MB 限制
+        .route("/api/files/delete", post(delete_file_handler).options(options_handler))
         // ========== Webhook 配置接口 ==========
         .route("/api/webhook/config", get(get_webhook_config_handler).post(set_webhook_config_handler).options(options_handler))
         .route("/api/webhook/test", post(test_webhook_handler).options(options_handler))

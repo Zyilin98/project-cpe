@@ -71,12 +71,44 @@ impl Default for WebhookConfig {
     }
 }
 
+/// 定时重启配置
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScheduledRebootConfig {
+    /// 是否启用定时重启
+    pub enabled: bool,
+    /// 每日重启时间 "HH:MM" 格式（如 "04:00"）
+    #[serde(default)]
+    pub daily_time: String,
+    /// 按间隔小时重启（如 24 表示每24小时）
+    #[serde(default)]
+    pub interval_hours: Option<u32>,
+    /// 重启模式: "daily" 或 "interval"
+    #[serde(default = "default_reboot_mode")]
+    pub mode: String,
+}
+
+fn default_reboot_mode() -> String {
+    "daily".to_string()
+}
+
+impl Default for ScheduledRebootConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            daily_time: "04:00".to_string(),
+            interval_hours: None,
+            mode: "daily".to_string(),
+        }
+    }
+}
+
 /// 应用配置
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AppConfig {
     #[serde(default)]
     pub webhook: WebhookConfig,
-    // 未来可以添加更多配置项
+    #[serde(default)]
+    pub scheduled_reboot: ScheduledRebootConfig,
 }
 
 /// 配置管理器
@@ -138,6 +170,20 @@ impl ConfigManager {
         {
             let mut config = self.config.write().unwrap();
             config.webhook = webhook;
+        }
+        self.save()
+    }
+    
+    /// 获取定时重启配置
+    pub fn get_scheduled_reboot(&self) -> ScheduledRebootConfig {
+        self.config.read().unwrap().scheduled_reboot.clone()
+    }
+    
+    /// 更新定时重启配置
+    pub fn set_scheduled_reboot(&self, config: ScheduledRebootConfig) -> Result<(), String> {
+        {
+            let mut current = self.config.write().unwrap();
+            current.scheduled_reboot = config;
         }
         self.save()
     }

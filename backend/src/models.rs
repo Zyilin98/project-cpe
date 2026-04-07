@@ -1164,3 +1164,84 @@ pub struct OtaApplyRequest {
     pub restart_now: bool,
 }
 
+// ============ 定时重启模型 ============
+
+/// 定时重启配置请求
+#[derive(Debug, Deserialize)]
+pub struct ScheduledRebootRequest {
+    /// 是否启用定时重启
+    pub enabled: bool,
+    /// 重启模式: "daily" 或 "interval"
+    #[serde(default = "default_mode_daily")]
+    pub mode: String,
+    /// 每日重启时间 "HH:MM" 格式
+    #[serde(default)]
+    pub daily_time: String,
+    /// 按间隔小时重启
+    #[serde(default)]
+    pub interval_hours: Option<u32>,
+}
+
+fn default_mode_daily() -> String {
+    "daily".to_string()
+}
+
+/// 定时重启配置响应
+#[derive(Debug, Serialize, Default)]
+pub struct ScheduledRebootResponse {
+    /// 是否启用定时重启
+    pub enabled: bool,
+    /// 重启模式
+    pub mode: String,
+    /// 每日重启时间
+    pub daily_time: String,
+    /// 间隔小时数
+    pub interval_hours: Option<u32>,
+    /// 下次重启预计时间（人类可读）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub next_reboot: Option<String>,
+}
+
+// ============ ADB TCP 模型 ============
+
+/// ADB TCP 状态响应
+#[derive(Debug, Serialize, Default)]
+pub struct AdbTcpStatusResponse {
+    /// 端口 5555 是否在监听
+    pub listening: bool,
+    /// 监听端口
+    pub port: u16,
+    /// 提示连接命令
+    pub connect_hint: String,
+}
+
+// ============ 文件管理模型 ============
+
+/// 上传文件信息
+#[derive(Debug, Serialize, Clone)]
+pub struct FileInfo {
+    /// 文件名
+    pub name: String,
+    /// 文件大小（字节）
+    pub size: u64,
+    /// 修改时间（ISO 8601）
+    pub modified: String,
+}
+
+/// 文件列表响应
+#[derive(Debug, Serialize, Default)]
+pub struct FileListResponse {
+    /// 文件列表
+    pub files: Vec<FileInfo>,
+    /// 文件总数
+    pub total: usize,
+    /// 存储目录
+    pub directory: String,
+}
+
+/// 文件删除请求
+#[derive(Debug, Deserialize)]
+pub struct FileDeleteRequest {
+    /// 要删除的文件名
+    pub filename: String,
+}

@@ -69,6 +69,10 @@ import type {
   WebhookTestResponse,
   OtaStatusResponse,
   OtaUploadResponse,
+  ScheduledRebootConfig,
+  ScheduledRebootRequest,
+  AdbTcpStatus,
+  FileListResponse,
 } from './types'
 
 // API 基础配置
@@ -577,6 +581,56 @@ class UDX710API {
     })
   }
 
+  // ========== 定时重启 ==========
+
+  // 获取定时重启配置
+  async getScheduledReboot() {
+    return request<ApiResponse<ScheduledRebootConfig>>('/system/scheduled-reboot')
+  }
+
+  // 设置定时重启配置
+  async setScheduledReboot(config: ScheduledRebootRequest) {
+    return request<ApiResponse<Record<string, unknown>>>('/system/scheduled-reboot', {
+      method: 'POST',
+      body: JSON.stringify(config),
+    })
+  }
+
+  // ========== ADB TCP ==========
+
+  // 获取 ADB TCP 状态
+  async getAdbTcpStatus() {
+    return request<ApiResponse<AdbTcpStatus>>('/adb-tcp')
+  }
+
+  // ========== 文件管理 ==========
+
+  // 获取文件列表
+  async getFileList() {
+    return request<ApiResponse<FileListResponse>>('/files/list')
+  }
+
+  // 上传文件
+  async uploadFile(file: File) {
+    const response = await fetch(`${API_BASE}/files/upload`, {
+      method: 'POST',
+      body: file,
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'x-filename': encodeURIComponent(file.name),
+      },
+    })
+    return response.json() as Promise<ApiResponse<{ filename: string; size: number; path: string }>>
+  }
+
+  // 删除文件
+  async deleteFile(filename: string) {
+    return request<ApiResponse<Record<string, unknown>>>('/files/delete', {
+      method: 'POST',
+      body: JSON.stringify({ filename }),
+    })
+  }
+
 }
 
 // 导出单例
@@ -584,4 +638,3 @@ export const api = new UDX710API()
 
 // 导出类型
 export * from './types'
-
